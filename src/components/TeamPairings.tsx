@@ -1,12 +1,6 @@
+import { C, statusColor } from '../lib/theme';
 import type { Entry, Matchup, ScenarioSelections } from '../lib/types';
 import { buildTeamStatusMap, computePairingMatrix } from '../lib/derive';
-
-const STATUS_COLOR: Record<string, string> = {
-  alive: '#22c55e',
-  won: '#3b82f6',
-  dead: '#ef4444',
-  unknown: '#64748b',
-};
 
 interface TeamPairingsProps {
   entries: Entry[];
@@ -21,13 +15,12 @@ export default function TeamPairings({ entries, matchups, scenario }: TeamPairin
 
   if (teams.length === 0) {
     return (
-      <div style={{ padding: 40, textAlign: 'center', color: '#475569' }}>
-        No pairing data — entries need at least 2 picks.
+      <div style={{ padding: 40, textAlign: 'center', color: C.textDim }}>
+        No pairing data — entries need at least 2 picks each.
       </div>
     );
   }
 
-  // Find max value for heat scaling
   let maxVal = 0;
   teams.forEach((a) =>
     teams.forEach((b) => {
@@ -35,107 +28,91 @@ export default function TeamPairings({ entries, matchups, scenario }: TeamPairin
     })
   );
 
-  function cellColor(val: number): string {
-    if (!val) return '#0f172a';
-    const intensity = val / maxVal;
-    // Orange heat: from dark to bright orange
-    const r = Math.round(15 + intensity * (249 - 15));
-    const g = Math.round(23 + intensity * (115 - 23));
-    const b = Math.round(42 + intensity * (22 - 42));
+  function cellBg(val: number): string {
+    if (!val) return C.bg;
+    const t = val / maxVal;
+    // teal heat: C.bg → C.accent
+    const r = Math.round(9  + t * (56  - 9));
+    const g = Math.round(13 + t * (189 - 13));
+    const b = Math.round(24 + t * (248 - 24));
     return `rgb(${r},${g},${b})`;
   }
 
-  const CELL = 36;
+  const CELL = 38;
 
   return (
-    <div style={{ padding: '0 24px 24px', maxWidth: 1400, margin: '0 auto' }}>
-      <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: 20 }}>
-        <h3 style={{ margin: '0 0 4px', fontSize: 15, fontWeight: 600, color: '#f1f5f9' }}>
-          Team Pairing Heatmap
-        </h3>
-        <p style={{ margin: '0 0 20px', fontSize: 12, color: '#64748b' }}>
-          How often teams are picked together in the same entry (today's picks only).
-          Darker orange = more frequent pairing.
-        </p>
+    <div style={{ padding: '0 28px 28px', maxWidth: 1440, margin: '0 auto' }}>
+      <div style={{ background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8, padding: 22 }}>
+        <div style={{ marginBottom: 20 }}>
+          <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Team Pairing Heatmap</div>
+          <div style={{ fontSize: 12, color: C.textDim, marginTop: 2 }}>
+            How often two teams appear together in the same entry — hover a cell for details.
+          </div>
+        </div>
 
         <div style={{ overflowX: 'auto' }}>
           <table style={{ borderCollapse: 'collapse', fontSize: 11 }}>
             <thead>
               <tr>
-                {/* Top-left empty corner */}
-                <th style={{ width: 110, minWidth: 110 }} />
-                {teams.map((team) => {
-                  const color = STATUS_COLOR[teamStatus[team] ?? 'unknown'] ?? '#64748b';
-                  return (
-                    <th
-                      key={team}
-                      style={{
-                        width: CELL,
-                        minWidth: CELL,
-                        padding: 4,
-                        writingMode: 'vertical-rl',
-                        textAlign: 'left',
-                        transform: 'rotate(180deg)',
-                        height: 110,
-                        color,
-                        fontWeight: 600,
-                        fontSize: 11,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {team}
-                    </th>
-                  );
-                })}
+                <th style={{ width: 120, minWidth: 120 }} />
+                {teams.map((team) => (
+                  <th key={team} style={{
+                    width: CELL, minWidth: CELL, padding: 3,
+                    writingMode: 'vertical-rl',
+                    transform: 'rotate(180deg)',
+                    height: 110, textAlign: 'left',
+                    color: statusColor(teamStatus[team] ?? 'unknown'),
+                    fontWeight: 600, fontSize: 11, whiteSpace: 'nowrap',
+                  }}>
+                    {team}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
-              {teams.map((rowTeam) => {
-                const rowColor = STATUS_COLOR[teamStatus[rowTeam] ?? 'unknown'] ?? '#64748b';
-                return (
-                  <tr key={rowTeam}>
-                    <td
-                      style={{
-                        padding: '4px 10px 4px 0',
-                        color: rowColor,
-                        fontWeight: 600,
-                        fontSize: 11,
-                        whiteSpace: 'nowrap',
-                      }}
-                    >
-                      {rowTeam}
-                    </td>
-                    {teams.map((colTeam) => {
-                      const val = rowTeam === colTeam ? null : (matrix[rowTeam]?.[colTeam] ?? 0);
-                      return (
-                        <td
-                          key={colTeam}
-                          title={
-                            rowTeam === colTeam
-                              ? rowTeam
-                              : `${rowTeam} + ${colTeam}: ${val} entries`
-                          }
-                          style={{
-                            width: CELL,
-                            height: CELL,
-                            background: rowTeam === colTeam ? '#334155' : cellColor(val ?? 0),
-                            textAlign: 'center',
-                            verticalAlign: 'middle',
-                            color: val && val > 0 ? '#fff' : '#334155',
-                            fontWeight: 600,
-                            cursor: 'default',
-                            border: '1px solid #0f172a',
-                          }}
-                        >
-                          {rowTeam === colTeam ? '—' : (val || '')}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                );
-              })}
+              {teams.map((rowTeam) => (
+                <tr key={rowTeam}>
+                  <td style={{
+                    padding: '3px 10px 3px 0', whiteSpace: 'nowrap',
+                    color: statusColor(teamStatus[rowTeam] ?? 'unknown'),
+                    fontWeight: 600, fontSize: 11,
+                  }}>
+                    {rowTeam}
+                  </td>
+                  {teams.map((colTeam) => {
+                    const isDiag = rowTeam === colTeam;
+                    const val = isDiag ? null : (matrix[rowTeam]?.[colTeam] ?? 0);
+                    return (
+                      <td key={colTeam}
+                        title={isDiag ? rowTeam : `${rowTeam} + ${colTeam}: ${val} entries`}
+                        style={{
+                          width: CELL, height: CELL,
+                          background: isDiag ? C.elevated : cellBg(val ?? 0),
+                          textAlign: 'center', verticalAlign: 'middle',
+                          color: val && val > 0 ? (val / maxVal > 0.5 ? '#000' : '#fff') : C.border,
+                          fontWeight: 700,
+                          border: `1px solid ${C.bg}`,
+                          cursor: 'default',
+                          transition: 'opacity 0.15s',
+                        }}
+                      >
+                        {isDiag ? '·' : (val || '')}
+                      </td>
+                    );
+                  })}
+                </tr>
+              ))}
             </tbody>
           </table>
+        </div>
+
+        <div style={{ marginTop: 16, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span style={{ fontSize: 11, color: C.textDim }}>Low</span>
+          <div style={{
+            width: 120, height: 8, borderRadius: 4,
+            background: `linear-gradient(to right, ${C.bg}, ${C.accent})`,
+          }} />
+          <span style={{ fontSize: 11, color: C.textDim }}>High frequency</span>
         </div>
       </div>
     </div>

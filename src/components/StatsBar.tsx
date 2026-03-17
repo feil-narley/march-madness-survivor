@@ -1,3 +1,4 @@
+import { C } from '../lib/theme';
 import type { Entry, Matchup, ScenarioSelections } from '../lib/types';
 import { buildTeamStatusMap, getEntryStatus } from '../lib/derive';
 
@@ -18,42 +19,35 @@ export default function StatsBar({ entries, matchups, scenario }: StatsBarProps)
     else uncertain++;
   });
 
-  const lockedMatchups = matchups.filter((m) => m.winner !== null).length;
-  const pendingMatchups = matchups.filter((m) => m.winner === null).length;
+  const locked  = matchups.filter((m) => m.winner !== null).length;
+  const pending = matchups.filter((m) => m.winner === null).length;
 
   const stats = [
-    { label: 'Total Entries', value: entries.length, color: '#f97316' },
-    { label: 'Surviving', value: alive, color: '#22c55e' },
-    { label: 'Uncertain', value: uncertain, color: '#f59e0b' },
-    { label: 'Eliminated', value: eliminated, color: '#ef4444' },
-    { label: 'Games Final', value: lockedMatchups, color: '#3b82f6' },
-    { label: 'Games Pending', value: pendingMatchups, color: '#94a3b8' },
+    { label: 'Total Entries',  value: entries.length, color: C.text },
+    { label: 'Surviving',      value: alive,           color: C.alive },
+    { label: 'Uncertain',      value: uncertain,       color: C.uncertain },
+    { label: 'Eliminated',     value: eliminated,      color: C.dead },
+    { label: 'Games Final',    value: locked,          color: C.won },
+    { label: 'Games Pending',  value: pending,         color: C.textMid },
   ];
 
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 12,
-        padding: '20px 24px',
-        maxWidth: 1400,
-        margin: '0 auto',
-      }}
-    >
+    <div style={{
+      display: 'flex', flexWrap: 'wrap', gap: 10,
+      padding: '18px 28px', maxWidth: 1440, margin: '0 auto',
+    }}>
       {stats.map((s) => (
-        <div
-          key={s.label}
-          style={{
-            flex: '1 1 120px',
-            background: '#1e293b',
-            border: '1px solid #334155',
-            borderRadius: 8,
-            padding: '14px 18px',
-          }}
-        >
-          <div style={{ fontSize: 28, fontWeight: 700, color: s.color }}>{s.value}</div>
-          <div style={{ fontSize: 12, color: '#94a3b8', marginTop: 2 }}>{s.label}</div>
+        <div key={s.label} style={{
+          flex: '1 1 110px',
+          background: C.surface,
+          border: `1px solid ${C.border}`,
+          borderRadius: 8,
+          padding: '14px 16px',
+        }}>
+          <div style={{ fontSize: 26, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</div>
+          <div style={{ fontSize: 11, color: C.textDim, marginTop: 4, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            {s.label}
+          </div>
         </div>
       ))}
     </div>

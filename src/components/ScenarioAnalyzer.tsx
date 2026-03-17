@@ -1,11 +1,7 @@
+import { useState } from 'react';
+import { C, entryColor } from '../lib/theme';
 import type { Entry, Matchup, ScenarioSelections } from '../lib/types';
-import { buildTeamStatusMap, getEntryStatus } from '../lib/derive';
-
-const ENTRY_COLOR: Record<string, string> = {
-  alive: '#22c55e',
-  eliminated: '#ef4444',
-  uncertain: '#f59e0b',
-};
+import { buildTeamStatusMap, getEntryStatus, getTodayPicks } from '../lib/derive';
 
 interface ScenarioAnalyzerProps {
   entries: Entry[];
@@ -22,142 +18,207 @@ export default function ScenarioAnalyzer({
   onScenarioChange,
   onReset,
 }: ScenarioAnalyzerProps) {
-  const teamStatus = buildTeamStatusMap(matchups, scenario);
+  const [search, setSearch] = useState('');
 
-  const pendingMatchups = matchups.filter((m) => m.winner === null);
-  const lockedMatchups = matchups.filter((m) => m.winner !== null);
+  const teamStatus = buildTeamStatusMap(matchups, scenario);
 
   // Group matchups by round
   const rounds: Record<string, Matchup[]> = {};
   matchups.forEach((m) => {
-    const r = m.round || 'Matchups';
+    const r = m.round || 'Today\'s Matchups';
     if (!rounds[r]) rounds[r] = [];
     rounds[r].push(m);
   });
 
-  // Entry survival summary under current scenario
   const survival = entries.map((e) => ({
     entry: e,
     status: getEntryStatus(e, teamStatus),
+    picks: getTodayPicks(e),
   }));
 
-  const aliveCount = survival.filter((s) => s.status === 'alive').length;
-  const elimCount = survival.filter((s) => s.status === 'eliminated').length;
-  const uncertainCount = survival.filter((s) => s.status === 'uncertain').length;
+  const filtered = search
+    ? survival.filter((s) => s.entry.name.toLowerCase().includes(search.toLowerCase()))
+    : survival;
+
+  const aliveCount    = survival.filter((s) => s.status === 'alive').length;
+  const elimCount     = survival.filter((s) => s.status === 'eliminated').length;
+  const uncertainCount= survival.filter((s) => s.status === 'uncertain').length;
 
   const hasScenario = Object.values(scenario).some((v) => v !== null);
+  const locked  = matchups.filter((m) => m.winner !== null).length;
+  const pending = matchups.filter((m) => m.winner === null).length;
 
   return (
-    <div style={{ padding: '0 24px 24px', maxWidth: 1400, margin: '0 auto' }}>
+    <div style={{ padding: '0 28px 28px', maxWidth: 1440, margin: '0 auto' }}>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 340px', gap: 24, alignItems: 'start' }}>
 
-        {/* Left: matchup cards */}
+        {/* ── Left: matchup cards ── */}
         <div>
-          {Object.entries(rounds).map(([round, rMatchups]) => (
-            <div key={round} style={{ marginBottom: 24 }}>
-              <h3 style={{ margin: '0 0 12px', fontSize: 13, fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                {round}
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 12 }}>
-                {rMatchups.map((m) => (
-                  <MatchupCard
-                    key={m.id}
-                    matchup={m}
-                    selection={scenario[m.id] ?? null}
-                    onChange={(winner) => onScenarioChange(m.id, winner)}
-                  />
-                ))}
+          {matchups.length === 0 ? (
+            <div style={{
+              background: C.surface, border: `1px solid ${C.border}`,
+              borderRadius: 8, padding: 40, textAlign: 'center',
+            }}>
+              <div style={{ fontSize: 36, marginBottom: 12 }}>📋</div>
+              <p style={{ color: C.textMid, margin: 0, fontWeight: 600 }}>No matchups loaded</p>
+              <p style={{ color: C.textDim, fontSize: 12, marginTop: 8, lineHeight: 1.5 }}>
+                Add a <strong style={{ color: C.accent }}>Matchups</strong> tab to your Google Sheet.<br />
+                Columns: <code style={{ color: C.textMid }}>Round | Team 1 | Team 2 | Winner</code>
+              </p>
+            </div>
+          ) : (
+            Object.entries(rounds).map(([round, rMatchups]) => (
+              <div key={round} style={{ marginBottom: 28 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                  <span style={{
+                    fontSize: 11, fontWeight: 700, color: C.textDim,
+                    textTransform: 'uppercase', letterSpacing: '0.08em',
+                  }}>
+                    {round}
+                  </span>
+                  <div style={{ flex: 1, height: 1, background: C.border }} />
+                  <span style={{ fontSize: 11, color: C.textDim }}>
+                    {rMatchups.filter(m => m.winner).length}/{rMatchups.length} final
+                  </span>
+                </div>
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                  gap: 12,
+                }}>
+                  {rMatchups.map((m) => (
+                    <MatchupCard
+                      key={m.id}
+                      matchup={m}
+                      selection={scenario[m.id] ?? null}
+                      onChange={(winner) => onScenarioChange(m.id, winner)}
+                    />
+                  ))}
+                </div>
               </div>
-            </div>
-          ))}
-
-          {matchups.length === 0 && (
-            <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: 32, textAlign: 'center' }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>📋</div>
-              <p style={{ color: '#94a3b8', margin: 0 }}>
-                No matchups found. Add a <strong style={{ color: '#f97316' }}>Matchups</strong> tab to your Google Sheet.
-              </p>
-              <p style={{ color: '#475569', fontSize: 12, marginTop: 8 }}>
-                Expected columns: Round | Team 1 | Team 2 | Winner (blank = pending)
-              </p>
-            </div>
+            ))
           )}
         </div>
 
-        {/* Right: results panel */}
-        <div style={{ position: 'sticky', top: 20 }}>
-          <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, padding: 20, marginBottom: 16 }}>
+        {/* ── Right: sidebar ── */}
+        <div style={{ position: 'sticky', top: 16 }}>
+
+          {/* Summary card */}
+          <div style={{
+            background: C.surface, border: `1px solid ${C.border}`,
+            borderRadius: 8, padding: 18, marginBottom: 12,
+          }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <h3 style={{ margin: 0, fontSize: 15, fontWeight: 600, color: '#f1f5f9' }}>
-                Scenario Results
-              </h3>
+              <span style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Scenario Results</span>
               {hasScenario && (
-                <button
-                  onClick={onReset}
-                  style={{
-                    background: 'none',
-                    border: '1px solid #475569',
-                    borderRadius: 5,
-                    color: '#94a3b8',
-                    padding: '5px 10px',
-                    fontSize: 12,
-                    cursor: 'pointer',
-                  }}
-                >
+                <button onClick={onReset} style={{
+                  background: 'none', border: `1px solid ${C.border}`,
+                  borderRadius: 5, color: C.textMid, padding: '4px 10px',
+                  fontSize: 11, cursor: 'pointer',
+                }}>
                   Reset
                 </button>
               )}
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
-              {[
-                { label: 'Would Survive', value: aliveCount, color: '#22c55e' },
-                { label: 'Uncertain', value: uncertainCount, color: '#f59e0b' },
-                { label: 'Eliminated', value: elimCount, color: '#ef4444' },
-              ].map((s) => (
-                <div key={s.label} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: 13, color: '#94a3b8' }}>{s.label}</span>
-                  <span style={{ fontSize: 20, fontWeight: 700, color: s.color }}>{s.value}</span>
-                </div>
-              ))}
-            </div>
+            {[
+              { label: 'Would Survive', value: aliveCount,     color: C.alive },
+              { label: 'Uncertain',     value: uncertainCount, color: C.uncertain },
+              { label: 'Eliminated',    value: elimCount,      color: C.dead },
+            ].map((s) => (
+              <div key={s.label} style={{
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                padding: '8px 0', borderBottom: `1px solid ${C.border}`,
+              }}>
+                <span style={{ fontSize: 12, color: C.textMid }}>{s.label}</span>
+                <span style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.value}</span>
+              </div>
+            ))}
 
-            <div style={{ fontSize: 11, color: '#475569', marginBottom: 8, display: 'flex', justifyContent: 'space-between' }}>
-              <span>{lockedMatchups.length} games final</span>
-              <span>{pendingMatchups.length} pending</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontSize: 11, color: C.textDim }}>
+              <span>{locked} final</span>
+              <span>{pending} pending</span>
             </div>
 
             {hasScenario && (
-              <div style={{ background: 'rgba(249,115,22,0.08)', border: '1px solid rgba(249,115,22,0.3)', borderRadius: 6, padding: '8px 12px', fontSize: 12, color: '#f97316' }}>
-                Scenario mode active — results reflect your selections above.
+              <div style={{
+                marginTop: 12, background: `${C.accent}10`,
+                border: `1px solid ${C.accentBorder}`,
+                borderRadius: 5, padding: '7px 10px',
+                fontSize: 11, color: C.accent, lineHeight: 1.4,
+              }}>
+                Scenario mode active — projections reflect your picks above.
               </div>
             )}
           </div>
 
-          {/* Scrollable entry list */}
-          <div style={{ background: '#1e293b', border: '1px solid #334155', borderRadius: 8, overflow: 'hidden' }}>
-            <div style={{ padding: '12px 16px', borderBottom: '1px solid #334155', fontSize: 13, fontWeight: 600, color: '#94a3b8' }}>
-              Entry Outcomes
+          {/* Entry outcomes with search */}
+          <div style={{
+            background: C.surface, border: `1px solid ${C.border}`,
+            borderRadius: 8, overflow: 'hidden',
+          }}>
+            <div style={{ padding: '12px 14px', borderBottom: `1px solid ${C.border}` }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.text, marginBottom: 8 }}>
+                Entry Outcomes
+              </div>
+              <input
+                type="text"
+                placeholder="Search by name…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                style={{
+                  width: '100%', background: C.elevated,
+                  border: `1px solid ${C.border}`, borderRadius: 5,
+                  color: C.text, padding: '7px 10px', fontSize: 12,
+                }}
+              />
             </div>
-            <div style={{ maxHeight: 420, overflowY: 'auto' }}>
-              {survival.map(({ entry, status }) => (
-                <div
-                  key={entry.name}
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    padding: '8px 16px',
-                    borderBottom: '1px solid #0f172a',
-                    borderLeft: `3px solid ${ENTRY_COLOR[status]}`,
-                  }}
-                >
-                  <span style={{ fontSize: 12, color: '#f1f5f9' }}>{entry.name}</span>
-                  <span style={{ fontSize: 11, fontWeight: 600, color: ENTRY_COLOR[status], textTransform: 'capitalize' }}>
-                    {status}
-                  </span>
+
+            <div style={{ maxHeight: 440, overflowY: 'auto' }}>
+              {filtered.length === 0 ? (
+                <div style={{ padding: 20, textAlign: 'center', color: C.textDim, fontSize: 12 }}>
+                  No entries match "{search}"
                 </div>
-              ))}
+              ) : (
+                filtered.map(({ entry, status, picks }) => {
+                  const ec = entryColor(status);
+                  return (
+                    <div key={entry.name} style={{
+                      padding: '9px 14px',
+                      borderBottom: `1px solid ${C.bg}`,
+                      borderLeft: `3px solid ${ec}`,
+                      background: `${ec}06`,
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: 12, fontWeight: 500, color: C.text }}>{entry.name}</span>
+                        <span style={{
+                          fontSize: 10, fontWeight: 700, color: ec,
+                          textTransform: 'uppercase', letterSpacing: '0.05em',
+                        }}>
+                          {status}
+                        </span>
+                      </div>
+                      {picks.length > 0 && (
+                        <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
+                          {picks.map((p) => {
+                            const ts = teamStatus[p] ?? 'unknown';
+                            const pc = ts === 'won' ? C.alive : ts === 'dead' ? C.dead : C.textMid;
+                            return (
+                              <span key={p} style={{
+                                fontSize: 10, color: pc,
+                                background: `${pc}15`, borderRadius: 3,
+                                padding: '1px 6px',
+                              }}>
+                                {p}
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </div>
           </div>
         </div>
@@ -165,6 +226,8 @@ export default function ScenarioAnalyzer({
     </div>
   );
 }
+
+/* ─── Matchup Card ─────────────────────────────────────────── */
 
 interface MatchupCardProps {
   matchup: Matchup;
@@ -176,106 +239,122 @@ function MatchupCard({ matchup, selection, onChange }: MatchupCardProps) {
   const locked = matchup.winner !== null;
   const effectiveWinner = matchup.winner ?? selection;
 
+  const team1Won = effectiveWinner === matchup.team1;
+  const team2Won = effectiveWinner === matchup.team2;
+
   return (
-    <div
-      style={{
-        background: '#0f172a',
-        border: `1px solid ${locked ? '#334155' : '#1e3a5f'}`,
-        borderRadius: 8,
-        overflow: 'hidden',
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          padding: '8px 12px',
-          background: locked ? '#1e293b' : 'rgba(59,130,246,0.1)',
-          borderBottom: '1px solid #334155',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <span style={{ fontSize: 11, color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>
+    <div style={{
+      background: C.elevated,
+      border: `1px solid ${locked ? C.border : C.borderHi}`,
+      borderRadius: 10,
+      overflow: 'hidden',
+    }}>
+      {/* Card header */}
+      <div style={{
+        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+        padding: '8px 14px',
+        background: locked ? C.surface : `${C.accent}08`,
+        borderBottom: `1px solid ${C.border}`,
+      }}>
+        <span style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
           {matchup.round || 'Matchup'}
         </span>
-        <span
-          style={{
-            fontSize: 10,
-            fontWeight: 700,
-            padding: '2px 7px',
-            borderRadius: 10,
-            background: locked ? 'rgba(34,197,94,0.15)' : 'rgba(59,130,246,0.15)',
-            color: locked ? '#22c55e' : '#3b82f6',
-          }}
-        >
-          {locked ? '🔒 FINAL' : '⚡ LIVE'}
+        <span style={{
+          fontSize: 10, fontWeight: 700,
+          padding: '2px 8px', borderRadius: 10,
+          background: locked ? `${C.alive}18` : `${C.accent}18`,
+          color: locked ? C.alive : C.accent,
+        }}>
+          {locked ? '🔒 Final' : '⚡ Pending'}
         </span>
       </div>
 
-      {/* Teams */}
-      <div style={{ display: 'flex', gap: 1, padding: 12 }}>
-        {[matchup.team1, matchup.team2].map((team) => {
-          const isWinner = effectiveWinner === team;
-          const isLoser = effectiveWinner !== null && effectiveWinner !== team;
-          return (
-            <button
-              key={team}
-              disabled={locked}
-              onClick={() => {
-                // If already selected, deselect (toggle off)
-                onChange(selection === team ? null : team);
-              }}
-              style={{
-                flex: 1,
-                padding: '12px 8px',
-                background: isWinner
-                  ? 'rgba(34,197,94,0.15)'
-                  : isLoser
-                  ? 'rgba(239,68,68,0.08)'
-                  : 'rgba(255,255,255,0.04)',
-                border: `2px solid ${
-                  isWinner ? '#22c55e' : isLoser ? 'rgba(239,68,68,0.3)' : '#334155'
-                }`,
-                borderRadius: 6,
-                color: isWinner ? '#22c55e' : isLoser ? '#475569' : '#f1f5f9',
-                fontSize: 13,
-                fontWeight: isWinner ? 700 : 500,
-                cursor: locked ? 'default' : 'pointer',
-                textDecoration: isLoser ? 'line-through' : 'none',
-                textAlign: 'center',
-                transition: 'all 0.15s',
-                opacity: isLoser ? 0.5 : 1,
-              }}
-            >
-              {team}
-              {isWinner && <div style={{ fontSize: 16, marginTop: 4 }}>🏆</div>}
-            </button>
-          );
-        })}
-      </div>
+      {/* Team buttons in VS layout */}
+      <div style={{ padding: '14px 14px 10px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, alignItems: 'center' }}>
+          {/* Team 1 */}
+          <TeamBtn
+            team={matchup.team1}
+            isWinner={team1Won}
+            isLoser={team2Won}
+            locked={locked}
+            onClick={() => onChange(selection === matchup.team1 ? null : matchup.team1)}
+          />
 
-      {/* Undecided option (only for unlocked) */}
-      {!locked && (
-        <button
-          onClick={() => onChange(null)}
-          style={{
-            display: 'block',
-            width: 'calc(100% - 24px)',
-            margin: '0 12px 12px',
-            padding: '7px',
-            background: selection === null ? 'rgba(100,116,139,0.2)' : 'transparent',
-            border: `1px solid ${selection === null ? '#64748b' : '#334155'}`,
-            borderRadius: 5,
-            color: '#64748b',
-            fontSize: 11,
-            cursor: 'pointer',
-            fontWeight: selection === null ? 600 : 400,
-          }}
-        >
-          Undecided
-        </button>
-      )}
+          {/* VS divider */}
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: C.textDim,
+            textAlign: 'center', userSelect: 'none',
+          }}>
+            VS
+          </div>
+
+          {/* Team 2 */}
+          <TeamBtn
+            team={matchup.team2}
+            isWinner={team2Won}
+            isLoser={team1Won}
+            locked={locked}
+            onClick={() => onChange(selection === matchup.team2 ? null : matchup.team2)}
+          />
+        </div>
+
+        {/* Undecided button */}
+        {!locked && (
+          <button
+            onClick={() => onChange(null)}
+            style={{
+              display: 'block', width: '100%', marginTop: 8,
+              padding: '6px',
+              background: selection === null ? `${C.textDim}18` : 'transparent',
+              border: `1px solid ${selection === null ? C.textMid : C.border}`,
+              borderRadius: 5, color: selection === null ? C.textMid : C.textDim,
+              fontSize: 11, cursor: 'pointer', fontWeight: selection === null ? 600 : 400,
+              transition: 'all 0.15s',
+            }}
+          >
+            Undecided
+          </button>
+        )}
+      </div>
     </div>
+  );
+}
+
+function TeamBtn({
+  team, isWinner, isLoser, locked, onClick,
+}: {
+  team: string; isWinner: boolean; isLoser: boolean; locked: boolean; onClick: () => void;
+}) {
+  return (
+    <button
+      disabled={locked}
+      onClick={onClick}
+      style={{
+        padding: '12px 8px',
+        background: isWinner ? `${C.alive}18` : isLoser ? `${C.dead}08` : `${C.text}06`,
+        border: `2px solid ${isWinner ? C.alive : isLoser ? `${C.dead}30` : C.border}`,
+        borderRadius: 7,
+        color: isWinner ? C.alive : isLoser ? C.textDim : C.text,
+        fontSize: 13,
+        fontWeight: isWinner ? 700 : 500,
+        cursor: locked ? 'default' : 'pointer',
+        textAlign: 'center',
+        textDecoration: isLoser ? 'line-through' : 'none',
+        opacity: isLoser ? 0.45 : 1,
+        transition: 'all 0.15s',
+        lineHeight: 1.3,
+        width: '100%',
+        minHeight: 58,
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 4,
+      }}
+    >
+      <span style={{ fontSize: 13, fontWeight: 600 }}>{team || '—'}</span>
+      {isWinner && <span style={{ fontSize: 14 }}>🏆</span>}
+    </button>
   );
 }
