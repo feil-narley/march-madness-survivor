@@ -88,19 +88,19 @@ export default function Dashboard({ entries, matchups, scenario }: DashboardProp
                 padding: '7px 0', borderBottom: `1px solid ${C.border}`, fontSize: 12,
               }}>
                 <span style={{
-                  color: m.winner === m.team1 ? C.alive : C.textDim,
-                  textDecoration: m.winner === m.team2 ? 'line-through' : 'none',
-                  fontWeight: m.winner === m.team1 ? 600 : 400,
+                  color: m.winner === m.betterSeed ? C.alive : C.textDim,
+                  textDecoration: m.winner === m.worseSeed ? 'line-through' : 'none',
+                  fontWeight: m.winner === m.betterSeed ? 600 : 400,
                 }}>
-                  {m.team1}
+                  {m.betterSeed}
                 </span>
                 <span style={{ color: C.textDim, fontSize: 10 }}>vs</span>
                 <span style={{
-                  color: m.winner === m.team2 ? C.alive : C.textDim,
-                  textDecoration: m.winner === m.team1 ? 'line-through' : 'none',
-                  fontWeight: m.winner === m.team2 ? 600 : 400,
+                  color: m.winner === m.worseSeed ? C.alive : C.textDim,
+                  textDecoration: m.winner === m.betterSeed ? 'line-through' : 'none',
+                  fontWeight: m.winner === m.worseSeed ? 600 : 400,
                 }}>
-                  {m.team2}
+                  {m.worseSeed}
                 </span>
                 <span style={{ color: C.alive, fontWeight: 700, fontSize: 11, marginLeft: 6 }}>
                   W

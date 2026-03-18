@@ -14,20 +14,22 @@ interface UseSheetDataResult {
   refresh: () => void;
 }
 
-const CURRENT_DAY_SHEET = '2025day2';
+// Update these constants whenever the active day changes
+const PICKS_SHEET   = 'picks - day 1';
+const MATCHUPS_SHEET = 'matchups - day 1';
 
 export function useSheetData(): UseSheetDataResult {
-  const [data, setData] = useState<SheetData | null>(null);
+  const [data, setData]       = useState<SheetData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [tick, setTick] = useState(0);
+  const [error, setError]     = useState<string | null>(null);
+  const [tick, setTick]       = useState(0);
 
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
     setError(null);
 
-    Promise.all([fetchEntries(CURRENT_DAY_SHEET), fetchMatchups()])
+    Promise.all([fetchEntries(PICKS_SHEET), fetchMatchups(MATCHUPS_SHEET)])
       .then(([entries, matchups]) => {
         if (!cancelled) {
           setData({ entries, matchups });

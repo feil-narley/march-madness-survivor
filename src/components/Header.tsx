@@ -37,7 +37,7 @@ export default function Header({ activeTab, onTabChange, onRefresh, loading }: H
                 March Madness Survivor
               </div>
               <div style={{ fontSize: 11, color: C.textDim, marginTop: 1, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                2025 Tournament · Day 2
+                2025 Tournament · Day 1
               </div>
             </div>
           </div>

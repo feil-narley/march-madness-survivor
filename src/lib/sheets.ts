@@ -1,7 +1,7 @@
 import Papa from 'papaparse';
 import type { Entry, Matchup } from './types';
 
-const SHEET_ID = '1tZURlTOuLx6u2gTqRcFjJb7_gSUnheLFFLB1kVjX2Vk';
+const SHEET_ID = '11BcCGc2QFjaoqJh7IB2cmxICqdjO1hgAdu1swCM3478';
 
 function sheetUrl(sheetName: string): string {
   return `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(sheetName)}`;
@@ -9,7 +9,7 @@ function sheetUrl(sheetName: string): string {
 
 async function fetchCsv(sheetName: string): Promise<string[][]> {
   const res = await fetch(sheetUrl(sheetName));
-  if (!res.ok) throw new Error(`Failed to fetch sheet "${sheetName}": ${res.status}`);
+  if (!res.ok) throw new Error(`Failed to fetch sheet "${sheetName}" (${res.status}). Make sure the sheet is publicly accessible.`);
   const text = await res.text();
   const result = Papa.parse<string[]>(text, { skipEmptyLines: false });
   return result.data as string[][];
@@ -21,10 +21,9 @@ function clean(val: string | undefined): string {
 }
 
 /**
- * Fetch entries from the given day tab.
+ * Fetch entries from the current day's picks tab.
  * Expected columns (row 1 = headers):
- *   A: Name  B: Pick1  C: Pick2  D: Paid  E: Buyback
- *   F: Pick3  G: Pick4  H: Pick5  I: Pick6  J: Pick7
+ *   A: Name  B: Pick 1  C: Pick 2  [D: Paid  E: Buyback  F: Pick3 … optional]
  */
 export async function fetchEntries(sheetName: string): Promise<Entry[]> {
   const rows = await fetchCsv(sheetName);
@@ -36,15 +35,15 @@ export async function fetchEntries(sheetName: string): Promise<Entry[]> {
     if (!name) continue;
     entries.push({
       name,
-      pick1: clean(r[1]),
-      pick2: clean(r[2]),
-      paid: clean(r[3]).toLowerCase() === 'y',
+      pick1:   clean(r[1]),
+      pick2:   clean(r[2]),
+      paid:    clean(r[3]).toLowerCase() === 'y',
       buyback: clean(r[4]).toLowerCase() === 'y',
-      pick3: clean(r[5]),
-      pick4: clean(r[6]),
-      pick5: clean(r[7]),
-      pick6: clean(r[8]),
-      pick7: clean(r[9]),
+      pick3:   clean(r[5]),
+      pick4:   clean(r[6]),
+      pick5:   clean(r[7]),
+      pick6:   clean(r[8]),
+      pick7:   clean(r[9]),
     });
   }
 
@@ -52,26 +51,29 @@ export async function fetchEntries(sheetName: string): Promise<Entry[]> {
 }
 
 /**
- * Fetch matchups from the "Matchups" tab.
+ * Fetch matchups from the current day's matchups tab.
  * Expected columns (row 1 = headers):
- *   A: Round  B: Team1  C: Team2  D: Winner (blank = not yet played)
+ *   A: Better Seed  B: Worse Seed  C: Favorite  D: Moneyline  E: Spread  F: Winner (blank = pending)
  */
-export async function fetchMatchups(): Promise<Matchup[]> {
-  const rows = await fetchCsv('Matchups');
+export async function fetchMatchups(sheetName: string): Promise<Matchup[]> {
+  const rows = await fetchCsv(sheetName);
   const matchups: Matchup[] = [];
 
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
-    const team1 = clean(r[1]);
-    const team2 = clean(r[2]);
-    if (!team1 && !team2) continue;
-    const winner = clean(r[3]);
+    const betterSeed = clean(r[0]);
+    const worseSeed  = clean(r[1]);
+    if (!betterSeed && !worseSeed) continue;
+
+    const winner = clean(r[5]);
     matchups.push({
-      id: `${team1}__${team2}`,
-      round: clean(r[0]),
-      team1,
-      team2,
-      winner: winner || null,
+      id:         `${betterSeed}__${worseSeed}`,
+      betterSeed,
+      worseSeed,
+      favorite:   clean(r[2]),
+      moneyline:  clean(r[3]),
+      spread:     clean(r[4]),
+      winner:     winner || null,
     });
   }
 

@@ -22,14 +22,6 @@ export default function ScenarioAnalyzer({
 
   const teamStatus = buildTeamStatusMap(matchups, scenario);
 
-  // Group matchups by round
-  const rounds: Record<string, Matchup[]> = {};
-  matchups.forEach((m) => {
-    const r = m.round || 'Today\'s Matchups';
-    if (!rounds[r]) rounds[r] = [];
-    rounds[r].push(m);
-  });
-
   const survival = entries.map((e) => ({
     entry: e,
     status: getEntryStatus(e, teamStatus),
@@ -40,9 +32,9 @@ export default function ScenarioAnalyzer({
     ? survival.filter((s) => s.entry.name.toLowerCase().includes(search.toLowerCase()))
     : survival;
 
-  const aliveCount    = survival.filter((s) => s.status === 'alive').length;
-  const elimCount     = survival.filter((s) => s.status === 'eliminated').length;
-  const uncertainCount= survival.filter((s) => s.status === 'uncertain').length;
+  const aliveCount     = survival.filter((s) => s.status === 'alive').length;
+  const elimCount      = survival.filter((s) => s.status === 'eliminated').length;
+  const uncertainCount = survival.filter((s) => s.status === 'uncertain').length;
 
   const hasScenario = Object.values(scenario).some((v) => v !== null);
   const locked  = matchups.filter((m) => m.winner !== null).length;
@@ -61,49 +53,33 @@ export default function ScenarioAnalyzer({
             }}>
               <div style={{ fontSize: 36, marginBottom: 12 }}>📋</div>
               <p style={{ color: C.textMid, margin: 0, fontWeight: 600 }}>No matchups loaded</p>
-              <p style={{ color: C.textDim, fontSize: 12, marginTop: 8, lineHeight: 1.5 }}>
-                Add a <strong style={{ color: C.accent }}>Matchups</strong> tab to your Google Sheet.<br />
-                Columns: <code style={{ color: C.textMid }}>Round | Team 1 | Team 2 | Winner</code>
+              <p style={{ color: C.textDim, fontSize: 12, marginTop: 8, lineHeight: 1.6 }}>
+                Make sure the matchups sheet tab exists and is publicly accessible.<br />
+                Columns: <code style={{ color: C.textMid }}>Better Seed | Worse Seed | Favorite | Moneyline | Spread | Winner</code>
               </p>
             </div>
           ) : (
-            Object.entries(rounds).map(([round, rMatchups]) => (
-              <div key={round} style={{ marginBottom: 28 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-                  <span style={{
-                    fontSize: 11, fontWeight: 700, color: C.textDim,
-                    textTransform: 'uppercase', letterSpacing: '0.08em',
-                  }}>
-                    {round}
-                  </span>
-                  <div style={{ flex: 1, height: 1, background: C.border }} />
-                  <span style={{ fontSize: 11, color: C.textDim }}>
-                    {rMatchups.filter(m => m.winner).length}/{rMatchups.length} final
-                  </span>
-                </div>
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
-                  gap: 12,
-                }}>
-                  {rMatchups.map((m) => (
-                    <MatchupCard
-                      key={m.id}
-                      matchup={m}
-                      selection={scenario[m.id] ?? null}
-                      onChange={(winner) => onScenarioChange(m.id, winner)}
-                    />
-                  ))}
-                </div>
-              </div>
-            ))
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))',
+              gap: 14,
+            }}>
+              {matchups.map((m) => (
+                <MatchupCard
+                  key={m.id}
+                  matchup={m}
+                  selection={scenario[m.id] ?? null}
+                  onChange={(winner) => onScenarioChange(m.id, winner)}
+                />
+              ))}
+            </div>
           )}
         </div>
 
         {/* ── Right: sidebar ── */}
         <div style={{ position: 'sticky', top: 16 }}>
 
-          {/* Summary card */}
+          {/* Summary */}
           <div style={{
             background: C.surface, border: `1px solid ${C.border}`,
             borderRadius: 8, padding: 18, marginBottom: 12,
@@ -116,7 +92,7 @@ export default function ScenarioAnalyzer({
                   borderRadius: 5, color: C.textMid, padding: '4px 10px',
                   fontSize: 11, cursor: 'pointer',
                 }}>
-                  Reset
+                  Reset All
                 </button>
               )}
             </div>
@@ -131,12 +107,12 @@ export default function ScenarioAnalyzer({
                 padding: '8px 0', borderBottom: `1px solid ${C.border}`,
               }}>
                 <span style={{ fontSize: 12, color: C.textMid }}>{s.label}</span>
-                <span style={{ fontSize: 22, fontWeight: 700, color: s.color }}>{s.value}</span>
+                <span style={{ fontSize: 22, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</span>
               </div>
             ))}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontSize: 11, color: C.textDim }}>
-              <span>{locked} final</span>
+              <span>{locked} games final</span>
               <span>{pending} pending</span>
             </div>
 
@@ -147,12 +123,12 @@ export default function ScenarioAnalyzer({
                 borderRadius: 5, padding: '7px 10px',
                 fontSize: 11, color: C.accent, lineHeight: 1.4,
               }}>
-                Scenario mode active — projections reflect your picks above.
+                Scenario mode active — projections reflect your selections.
               </div>
             )}
           </div>
 
-          {/* Entry outcomes with search */}
+          {/* Entry outcomes */}
           <div style={{
             background: C.surface, border: `1px solid ${C.border}`,
             borderRadius: 8, overflow: 'hidden',
@@ -174,7 +150,7 @@ export default function ScenarioAnalyzer({
               />
             </div>
 
-            <div style={{ maxHeight: 440, overflowY: 'auto' }}>
+            <div style={{ maxHeight: 480, overflowY: 'auto' }}>
               {filtered.length === 0 ? (
                 <div style={{ padding: 20, textAlign: 'center', color: C.textDim, fontSize: 12 }}>
                   No entries match "{search}"
@@ -187,7 +163,6 @@ export default function ScenarioAnalyzer({
                       padding: '9px 14px',
                       borderBottom: `1px solid ${C.bg}`,
                       borderLeft: `3px solid ${ec}`,
-                      background: `${ec}06`,
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontSize: 12, fontWeight: 500, color: C.text }}>{entry.name}</span>
@@ -199,7 +174,7 @@ export default function ScenarioAnalyzer({
                         </span>
                       </div>
                       {picks.length > 0 && (
-                        <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', gap: 4, marginTop: 5, flexWrap: 'wrap' }}>
                           {picks.map((p) => {
                             const ts = teamStatus[p] ?? 'unknown';
                             const pc = ts === 'won' ? C.alive : ts === 'dead' ? C.dead : C.textMid;
@@ -207,7 +182,7 @@ export default function ScenarioAnalyzer({
                               <span key={p} style={{
                                 fontSize: 10, color: pc,
                                 background: `${pc}15`, borderRadius: 3,
-                                padding: '1px 6px',
+                                padding: '1px 6px', border: `1px solid ${pc}30`,
                               }}>
                                 {p}
                               </span>
@@ -235,12 +210,24 @@ interface MatchupCardProps {
   onChange: (winner: string | null) => void;
 }
 
+/** Format moneyline for display — cap absurdly large lines */
+function formatML(ml: string): string {
+  if (!ml) return '';
+  const n = parseInt(ml, 10);
+  if (isNaN(n)) return ml;
+  if (Math.abs(n) >= 5000) return n > 0 ? '+∞' : 'LOCK';
+  return n > 0 ? `+${n}` : `${n}`;
+}
+
 function MatchupCard({ matchup, selection, onChange }: MatchupCardProps) {
   const locked = matchup.winner !== null;
   const effectiveWinner = matchup.winner ?? selection;
 
-  const team1Won = effectiveWinner === matchup.team1;
-  const team2Won = effectiveWinner === matchup.team2;
+  const betterWon  = effectiveWinner === matchup.betterSeed;
+  const worseWon   = effectiveWinner === matchup.worseSeed;
+  const undecided  = effectiveWinner === null;
+
+  const isFavBetter = !matchup.favorite || matchup.favorite === matchup.betterSeed;
 
   return (
     <div style={{
@@ -249,112 +236,161 @@ function MatchupCard({ matchup, selection, onChange }: MatchupCardProps) {
       borderRadius: 10,
       overflow: 'hidden',
     }}>
-      {/* Card header */}
+      {/* ── Header: favorite info ── */}
       <div style={{
-        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-        padding: '8px 14px',
+        padding: '10px 14px',
         background: locked ? C.surface : `${C.accent}08`,
         borderBottom: `1px solid ${C.border}`,
       }}>
-        <span style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: 'uppercase', letterSpacing: '0.07em' }}>
-          {matchup.round || 'Matchup'}
-        </span>
-        <span style={{
-          fontSize: 10, fontWeight: 700,
-          padding: '2px 8px', borderRadius: 10,
-          background: locked ? `${C.alive}18` : `${C.accent}18`,
-          color: locked ? C.alive : C.accent,
-        }}>
-          {locked ? '🔒 Final' : '⚡ Pending'}
-        </span>
-      </div>
-
-      {/* Team buttons in VS layout */}
-      <div style={{ padding: '14px 14px 10px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, alignItems: 'center' }}>
-          {/* Team 1 */}
-          <TeamBtn
-            team={matchup.team1}
-            isWinner={team1Won}
-            isLoser={team2Won}
-            locked={locked}
-            onClick={() => onChange(selection === matchup.team1 ? null : matchup.team1)}
-          />
-
-          {/* VS divider */}
-          <div style={{
-            fontSize: 11, fontWeight: 700, color: C.textDim,
-            textAlign: 'center', userSelect: 'none',
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <span style={{
+            fontSize: 10, fontWeight: 700, color: C.textDim,
+            textTransform: 'uppercase', letterSpacing: '0.07em',
           }}>
-            VS
-          </div>
-
-          {/* Team 2 */}
-          <TeamBtn
-            team={matchup.team2}
-            isWinner={team2Won}
-            isLoser={team1Won}
-            locked={locked}
-            onClick={() => onChange(selection === matchup.team2 ? null : matchup.team2)}
-          />
+            {locked ? '🔒 Final' : '⚡ Pending'}
+          </span>
+          {locked && matchup.winner && (
+            <span style={{ fontSize: 11, fontWeight: 600, color: C.alive }}>
+              {matchup.winner} wins
+            </span>
+          )}
         </div>
 
-        {/* Undecided button */}
-        {!locked && (
-          <button
-            onClick={() => onChange(null)}
-            style={{
-              display: 'block', width: '100%', marginTop: 8,
-              padding: '6px',
-              background: selection === null ? `${C.textDim}18` : 'transparent',
-              border: `1px solid ${selection === null ? C.textMid : C.border}`,
-              borderRadius: 5, color: selection === null ? C.textMid : C.textDim,
-              fontSize: 11, cursor: 'pointer', fontWeight: selection === null ? 600 : 400,
-              transition: 'all 0.15s',
-            }}
-          >
-            Undecided
-          </button>
+        {/* Favorite line */}
+        {matchup.favorite && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 11, color: C.textMid }}>Fav:</span>
+            <span style={{ fontSize: 12, fontWeight: 700, color: C.accent }}>
+              {matchup.favorite}
+            </span>
+            {matchup.moneyline && (
+              <span style={{
+                fontSize: 11, fontWeight: 600,
+                color: isFavBetter ? C.alive : C.uncertain,
+                background: isFavBetter ? `${C.alive}15` : `${C.uncertain}15`,
+                borderRadius: 4, padding: '1px 7px',
+              }}>
+                {formatML(matchup.moneyline)}
+              </span>
+            )}
+            {matchup.spread && (
+              <span style={{
+                fontSize: 11, color: C.textMid,
+                background: `${C.text}08`,
+                borderRadius: 4, padding: '1px 7px',
+              }}>
+                {matchup.spread}
+              </span>
+            )}
+          </div>
         )}
+      </div>
+
+      {/* ── Three-tile selector ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: 8, padding: 12 }}>
+
+        {/* Better Seed (left) */}
+        <SeedTile
+          label={matchup.betterSeed}
+          sublabel="Better Seed"
+          selected={betterWon}
+          otherSelected={worseWon}
+          locked={locked}
+          onClick={() => onChange(betterWon ? null : matchup.betterSeed)}
+          color={C.alive}
+        />
+
+        {/* Undecided (center) */}
+        <button
+          onClick={() => onChange(null)}
+          disabled={locked}
+          style={{
+            width: 72,
+            background: undecided && !locked ? `${C.textDim}18` : 'transparent',
+            border: `2px solid ${undecided && !locked ? C.textMid : C.border}`,
+            borderRadius: 8,
+            color: undecided && !locked ? C.textMid : C.textDim,
+            fontSize: 10,
+            fontWeight: undecided && !locked ? 700 : 400,
+            cursor: locked ? 'default' : 'pointer',
+            padding: '8px 4px',
+            textAlign: 'center',
+            letterSpacing: '0.03em',
+            textTransform: 'uppercase',
+            transition: 'all 0.15s',
+            lineHeight: 1.4,
+          }}
+        >
+          {locked ? '—' : 'Undet.'}
+        </button>
+
+        {/* Worse Seed (right) */}
+        <SeedTile
+          label={matchup.worseSeed}
+          sublabel="Worse Seed"
+          selected={worseWon}
+          otherSelected={betterWon}
+          locked={locked}
+          onClick={() => onChange(worseWon ? null : matchup.worseSeed)}
+          color={C.uncertain}
+        />
       </div>
     </div>
   );
 }
 
-function TeamBtn({
-  team, isWinner, isLoser, locked, onClick,
-}: {
-  team: string; isWinner: boolean; isLoser: boolean; locked: boolean; onClick: () => void;
-}) {
+interface SeedTileProps {
+  label: string;
+  sublabel: string;
+  selected: boolean;
+  otherSelected: boolean;
+  locked: boolean;
+  onClick: () => void;
+  color: string;
+}
+
+function SeedTile({ label, sublabel, selected, otherSelected, locked, onClick, color }: SeedTileProps) {
+  const isEliminated = otherSelected; // the other team was picked as winner
+
   return (
     <button
       disabled={locked}
       onClick={onClick}
       style={{
         padding: '12px 8px',
-        background: isWinner ? `${C.alive}18` : isLoser ? `${C.dead}08` : `${C.text}06`,
-        border: `2px solid ${isWinner ? C.alive : isLoser ? `${C.dead}30` : C.border}`,
-        borderRadius: 7,
-        color: isWinner ? C.alive : isLoser ? C.textDim : C.text,
-        fontSize: 13,
-        fontWeight: isWinner ? 700 : 500,
+        background: selected
+          ? `${color}18`
+          : isEliminated
+          ? `${C.dead}06`
+          : `${C.text}04`,
+        border: `2px solid ${
+          selected ? color : isEliminated ? `${C.dead}25` : C.border
+        }`,
+        borderRadius: 8,
+        color: selected ? color : isEliminated ? C.textDim : C.text,
         cursor: locked ? 'default' : 'pointer',
         textAlign: 'center',
-        textDecoration: isLoser ? 'line-through' : 'none',
-        opacity: isLoser ? 0.45 : 1,
+        opacity: isEliminated ? 0.4 : 1,
         transition: 'all 0.15s',
-        lineHeight: 1.3,
-        width: '100%',
-        minHeight: 58,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         gap: 4,
+        minHeight: 70,
       }}
     >
-      <span style={{ fontSize: 13, fontWeight: 600 }}>{team || '—'}</span>
-      {isWinner && <span style={{ fontSize: 14 }}>🏆</span>}
+      <span style={{
+        fontSize: 13, fontWeight: 700,
+        textDecoration: isEliminated ? 'line-through' : 'none',
+        lineHeight: 1.2,
+      }}>
+        {label || '—'}
+      </span>
+      <span style={{ fontSize: 9, color: selected ? `${color}90` : C.textDim, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+        {sublabel}
+      </span>
+      {selected && <span style={{ fontSize: 14, marginTop: 2 }}>🏆</span>}
     </button>
   );
 }

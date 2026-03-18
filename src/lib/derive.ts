@@ -18,13 +18,12 @@ export function getTeamStatus(
   let appearedInAny = false;
 
   for (const m of matchups) {
-    if (m.team1 !== team && m.team2 !== team) continue;
+    if (m.betterSeed !== team && m.worseSeed !== team) continue;
     appearedInAny = true;
 
-    // Locked result takes precedence
     const result = m.winner ?? scenario[m.id] ?? null;
     if (result) {
-      if (result !== m.team1 && result !== m.team2) continue; // bad data
+      if (result !== m.betterSeed && result !== m.worseSeed) continue;
       return result === team ? 'won' : 'dead';
     }
   }
@@ -39,22 +38,26 @@ export function buildTeamStatusMap(
 ): Record<string, TeamStatus> {
   const teams = new Set<string>();
   matchups.forEach((m) => {
-    if (m.team1) teams.add(m.team1);
-    if (m.team2) teams.add(m.team2);
+    if (m.betterSeed) teams.add(m.betterSeed);
+    if (m.worseSeed)  teams.add(m.worseSeed);
   });
 
   const map: Record<string, TeamStatus> = {};
-  teams.forEach((t) => {
-    map[t] = getTeamStatus(t, matchups, scenario);
-  });
+  teams.forEach((t) => { map[t] = getTeamStatus(t, matchups, scenario); });
   return map;
 }
 
-/** Return the picks for "today" (day 2 = pick3 + pick4, plus buy-back extras). */
+/**
+ * Return today's picks for an entry.
+ * Day 1 sheets only have pick1/pick2; later days add pick3+.
+ * We return all non-empty picks so this works for any day.
+ */
 export function getTodayPicks(entry: Entry): string[] {
-  const picks = [entry.pick3, entry.pick4];
-  if (entry.buyback) picks.push(entry.pick5, entry.pick6, entry.pick7);
-  return picks.filter(Boolean);
+  return [
+    entry.pick1, entry.pick2,
+    entry.pick3, entry.pick4,
+    entry.pick5, entry.pick6, entry.pick7,
+  ].filter(Boolean);
 }
 
 /** Determine whether an entry survives given a team status map. */
@@ -74,7 +77,7 @@ export function getEntryStatus(
   return anyUncertain ? 'uncertain' : 'alive';
 }
 
-/** Compute per-team pick statistics for today's picks. */
+/** Compute per-team pick statistics. */
 export function computeTeamStats(
   entries: Entry[],
   teamStatus: Record<string, TeamStatus>
@@ -98,7 +101,7 @@ export function computeTeamStats(
     .sort((a, b) => b.pickCount - a.pickCount);
 }
 
-/** Compute how often each pair of teams is picked together (today's picks only). */
+/** Compute how often each pair of teams is picked together. */
 export function computePairingMatrix(
   entries: Entry[]
 ): Record<string, Record<string, number>> {
@@ -106,11 +109,9 @@ export function computePairingMatrix(
 
   entries.forEach((e) => {
     const picks = getTodayPicks(e);
-    // All unique pairs
     for (let i = 0; i < picks.length; i++) {
       for (let j = i + 1; j < picks.length; j++) {
-        const a = picks[i];
-        const b = picks[j];
+        const a = picks[i], b = picks[j];
         if (!a || !b || a === b) continue;
         if (!pairs[a]) pairs[a] = {};
         if (!pairs[b]) pairs[b] = {};
@@ -121,11 +122,4 @@ export function computePairingMatrix(
   });
 
   return pairs;
-}
-
-/** Summary counts: how many teams are alive / have won / are dead. */
-export function computeTeamSummary(teamStatus: Record<string, TeamStatus>) {
-  const counts = { alive: 0, won: 0, dead: 0, unknown: 0 };
-  Object.values(teamStatus).forEach((s) => counts[s]++);
-  return counts;
 }

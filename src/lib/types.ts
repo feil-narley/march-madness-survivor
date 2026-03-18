@@ -16,10 +16,12 @@ export interface Entry {
 
 export interface Matchup {
   id: string;
-  round: string;
-  team1: string;
-  team2: string;
-  /** null = not yet played (unlocked for scenario); non-null = locked result */
+  betterSeed: string;
+  worseSeed: string;
+  favorite: string;
+  moneyline: string;
+  spread: string;
+  /** null = not yet played (unlocked); non-null = locked result (winning team name) */
   winner: string | null;
 }
 
