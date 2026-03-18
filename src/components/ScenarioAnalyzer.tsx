@@ -292,12 +292,10 @@ function MatchupCard({ matchup, selection, onChange }: MatchupCardProps) {
         {/* Better Seed (left) */}
         <SeedTile
           label={matchup.betterSeed}
-          sublabel="Better Seed"
           selected={betterWon}
-          otherSelected={worseWon}
+          isLoser={worseWon}
           locked={locked}
           onClick={() => onChange(betterWon ? null : matchup.betterSeed)}
-          color={C.alive}
         />
 
         {/* Undecided (center) */}
@@ -306,10 +304,10 @@ function MatchupCard({ matchup, selection, onChange }: MatchupCardProps) {
           disabled={locked}
           style={{
             width: 72,
-            background: undecided && !locked ? `${C.textDim}18` : 'transparent',
-            border: `2px solid ${undecided && !locked ? C.textMid : C.border}`,
+            background: undecided && !locked ? `${C.uncertain}14` : 'transparent',
+            border: `2px solid ${undecided && !locked ? C.uncertain : C.border}`,
             borderRadius: 8,
-            color: undecided && !locked ? C.textMid : C.textDim,
+            color: undecided && !locked ? C.uncertain : C.textDim,
             fontSize: 10,
             fontWeight: undecided && !locked ? 700 : 400,
             cursor: locked ? 'default' : 'pointer',
@@ -327,12 +325,10 @@ function MatchupCard({ matchup, selection, onChange }: MatchupCardProps) {
         {/* Worse Seed (right) */}
         <SeedTile
           label={matchup.worseSeed}
-          sublabel="Worse Seed"
           selected={worseWon}
-          otherSelected={betterWon}
+          isLoser={betterWon}
           locked={locked}
           onClick={() => onChange(worseWon ? null : matchup.worseSeed)}
-          color={C.uncertain}
         />
       </div>
     </div>
@@ -341,36 +337,26 @@ function MatchupCard({ matchup, selection, onChange }: MatchupCardProps) {
 
 interface SeedTileProps {
   label: string;
-  sublabel: string;
   selected: boolean;
-  otherSelected: boolean;
+  isLoser: boolean;
   locked: boolean;
   onClick: () => void;
-  color: string;
 }
 
-function SeedTile({ label, sublabel, selected, otherSelected, locked, onClick, color }: SeedTileProps) {
-  const isEliminated = otherSelected; // the other team was picked as winner
-
+function SeedTile({ label, selected, isLoser, locked, onClick }: SeedTileProps) {
   return (
     <button
       disabled={locked}
       onClick={onClick}
       style={{
         padding: '12px 8px',
-        background: selected
-          ? `${color}18`
-          : isEliminated
-          ? `${C.dead}06`
-          : `${C.text}04`,
-        border: `2px solid ${
-          selected ? color : isEliminated ? `${C.dead}25` : C.border
-        }`,
+        background: selected ? C.aliveDim : isLoser ? C.deadDim : `${C.text}04`,
+        border: `2px solid ${selected ? C.alive : isLoser ? `${C.dead}40` : C.border}`,
         borderRadius: 8,
-        color: selected ? color : isEliminated ? C.textDim : C.text,
+        color: selected ? C.alive : isLoser ? C.dead : C.text,
         cursor: locked ? 'default' : 'pointer',
         textAlign: 'center',
-        opacity: isEliminated ? 0.4 : 1,
+        opacity: isLoser ? 0.45 : 1,
         transition: 'all 0.15s',
         display: 'flex',
         flexDirection: 'column',
@@ -378,17 +364,15 @@ function SeedTile({ label, sublabel, selected, otherSelected, locked, onClick, c
         justifyContent: 'center',
         gap: 4,
         minHeight: 70,
+        width: '100%',
       }}
     >
       <span style={{
         fontSize: 13, fontWeight: 700,
-        textDecoration: isEliminated ? 'line-through' : 'none',
+        textDecoration: isLoser ? 'line-through' : 'none',
         lineHeight: 1.2,
       }}>
         {label || '—'}
-      </span>
-      <span style={{ fontSize: 9, color: selected ? `${color}90` : C.textDim, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-        {sublabel}
       </span>
       {selected && <span style={{ fontSize: 14, marginTop: 2 }}>🏆</span>}
     </button>
