@@ -57,7 +57,7 @@ export function getTodayPicks(entry: Entry): string[] {
     entry.pick1, entry.pick2,
     entry.pick3, entry.pick4,
     entry.pick5, entry.pick6, entry.pick7,
-  ].filter(Boolean);
+  ].filter(p => p && p !== '-');
 }
 
 /** Determine whether an entry survives given a team status map. */
@@ -69,6 +69,10 @@ export function getEntryStatus(
   if (entry.sheetStatus && entry.sheetStatus !== 'active' && entry.sheetStatus !== '') {
     return 'eliminated';
   }
+
+  // '-' in any pick slot means the entry missed the deadline
+  const rawPicks = [entry.pick1, entry.pick2, entry.pick3, entry.pick4, entry.pick5, entry.pick6, entry.pick7];
+  if (rawPicks.some(p => p === '-')) return 'eliminated';
 
   const picks = getTodayPicks(entry);
   if (picks.length === 0) return 'uncertain';

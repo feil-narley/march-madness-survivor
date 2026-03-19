@@ -28,8 +28,11 @@ export default function ScenarioAnalyzer({
     picks: getTodayPicks(e),
   }));
 
+  // Match if any word in the name starts with the search term (not mid-word)
   const filtered = search
-    ? survival.filter((s) => s.entry.name.toLowerCase().includes(search.toLowerCase()))
+    ? survival.filter((s) =>
+        s.entry.name.toLowerCase().split(/\s+/).some(word => word.startsWith(search.toLowerCase()))
+      )
     : survival;
 
   const total          = survival.length;
