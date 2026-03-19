@@ -13,9 +13,10 @@ export default function Dashboard({ entries, matchups, scenario }: DashboardProp
   const teamStats  = computeTeamStats(entries, teamStatus);
   const survival   = entries.map((e) => getEntryStatus(e, teamStatus));
 
-  const alive     = survival.filter((s) => s === 'alive').length;
-  const eliminated= survival.filter((s) => s === 'eliminated').length;
-  const uncertain = survival.filter((s) => s === 'uncertain').length;
+  const alive      = survival.filter((s) => s === 'alive').length;
+  const partial    = survival.filter((s) => s === 'partial').length;
+  const eliminated = survival.filter((s) => s === 'eliminated').length;
+  const uncertain  = survival.filter((s) => s === 'uncertain').length;
 
   const locked  = matchups.filter((m) => m.winner !== null);
   const pending = matchups.filter((m) => m.winner === null);
@@ -33,10 +34,11 @@ export default function Dashboard({ entries, matchups, scenario }: DashboardProp
         {/* Entry Status */}
         <Card title="Entry Status">
           {[
-            { label: 'Surviving',                value: alive,           color: C.alive },
-            { label: 'Uncertain (games pending)',  value: uncertain,       color: C.uncertain },
-            { label: 'Eliminated',               value: eliminated,      color: C.dead },
-            { label: 'Total Entries',            value: entries.length,  color: C.textMid },
+            { label: 'Survived',    value: alive,          color: C.alive },
+            { label: 'Partial',     value: partial,        color: C.partial },
+            { label: 'Uncertain',   value: uncertain,      color: C.uncertain },
+            { label: 'Eliminated',  value: eliminated,     color: C.dead },
+            { label: 'Total',       value: entries.length, color: C.textMid },
           ].map((s) => (
             <StatRow key={s.label} label={s.label} value={s.value} color={s.color} />
           ))}

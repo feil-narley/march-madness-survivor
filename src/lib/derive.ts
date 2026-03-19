@@ -73,13 +73,21 @@ export function getEntryStatus(
   const picks = getTodayPicks(entry);
   if (picks.length === 0) return 'uncertain';
 
-  let anyUncertain = false;
+  let wonCount     = 0;
+  let deadCount    = 0;
+  let pendingCount = 0;
+
   for (const pick of picks) {
     const s = teamStatus[pick] ?? 'alive';
-    if (s === 'dead') return 'eliminated';
-    if (s === 'alive' || s === 'unknown') anyUncertain = true;
+    if (s === 'dead')               deadCount++;
+    else if (s === 'won')           wonCount++;
+    else /* alive | unknown */      pendingCount++;
   }
-  return anyUncertain ? 'uncertain' : 'alive';
+
+  if (deadCount > 0)                         return 'eliminated';
+  if (pendingCount === 0)                    return 'alive';      // all picks won
+  if (wonCount > 0 && pendingCount > 0)      return 'partial';    // some won, some pending
+  return 'uncertain';                                              // all pending
 }
 
 /** Compute per-team pick statistics. */

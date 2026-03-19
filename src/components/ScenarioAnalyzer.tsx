@@ -32,9 +32,16 @@ export default function ScenarioAnalyzer({
     ? survival.filter((s) => s.entry.name.toLowerCase().includes(search.toLowerCase()))
     : survival;
 
+  const total          = survival.length;
   const aliveCount     = survival.filter((s) => s.status === 'alive').length;
+  const partialCount   = survival.filter((s) => s.status === 'partial').length;
   const elimCount      = survival.filter((s) => s.status === 'eliminated').length;
   const uncertainCount = survival.filter((s) => s.status === 'uncertain').length;
+
+  function pct(n: number): string {
+    if (total === 0) return '0.0%';
+    return `${((n / total) * 100).toFixed(1)}%`;
+  }
 
   const hasScenario = Object.values(scenario).some((v) => v !== null);
   const locked  = matchups.filter((m) => m.winner !== null).length;
@@ -98,16 +105,20 @@ export default function ScenarioAnalyzer({
             </div>
 
             {[
-              { label: 'Would Survive', value: aliveCount,     color: C.alive },
-              { label: 'Uncertain',     value: uncertainCount, color: C.uncertain },
-              { label: 'Eliminated',    value: elimCount,      color: C.dead },
+              { label: 'Would Survive', value: aliveCount,     color: C.alive,     p: pct(aliveCount) },
+              { label: 'Partial',       value: partialCount,   color: C.partial,   p: pct(partialCount) },
+              { label: 'Uncertain',     value: uncertainCount, color: C.uncertain, p: pct(uncertainCount) },
+              { label: 'Eliminated',    value: elimCount,      color: C.dead,      p: pct(elimCount) },
             ].map((s) => (
               <div key={s.label} style={{
                 display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 padding: '8px 0', borderBottom: `1px solid ${C.border}`,
               }}>
                 <span style={{ fontSize: 12, color: C.textMid }}>{s.label}</span>
-                <span style={{ fontSize: 22, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</span>
+                <span style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+                  <span style={{ fontSize: 22, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</span>
+                  <span style={{ fontSize: 11, color: s.color, opacity: 0.7 }}>({s.p})</span>
+                </span>
               </div>
             ))}
 

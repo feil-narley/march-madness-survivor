@@ -1,5 +1,5 @@
 export type TeamStatus = 'alive' | 'won' | 'dead' | 'unknown';
-export type EntryStatus = 'alive' | 'eliminated' | 'uncertain';
+export type EntryStatus = 'alive' | 'partial' | 'uncertain' | 'eliminated';
 
 export interface Entry {
   name: string;

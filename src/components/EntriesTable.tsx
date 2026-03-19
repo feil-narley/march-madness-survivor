@@ -30,7 +30,7 @@ interface EntriesTableProps {
 }
 
 export default function EntriesTable({ entries, matchups, scenario }: EntriesTableProps) {
-  const [filter, setFilter] = useState<'all' | 'alive' | 'eliminated' | 'uncertain'>('all');
+  const [filter, setFilter] = useState<'all' | 'alive' | 'partial' | 'uncertain' | 'eliminated'>('all');
   const [search, setSearch] = useState('');
 
   const teamStatus = buildTeamStatusMap(matchups, scenario);
@@ -60,10 +60,11 @@ export default function EntriesTable({ entries, matchups, scenario }: EntriesTab
   const activeCols = pickCols.filter((c) => entries.some((e) => !!(e[c.key] as string)));
 
   const filterCounts = {
-    all: enriched.length,
-    alive: enriched.filter(e => e.status === 'alive').length,
+    all:       enriched.length,
+    alive:     enriched.filter(e => e.status === 'alive').length,
+    partial:   enriched.filter(e => e.status === 'partial').length,
     uncertain: enriched.filter(e => e.status === 'uncertain').length,
-    eliminated: enriched.filter(e => e.status === 'eliminated').length,
+    eliminated:enriched.filter(e => e.status === 'eliminated').length,
   };
 
   return (
@@ -80,9 +81,9 @@ export default function EntriesTable({ entries, matchups, scenario }: EntriesTab
             color: C.text, padding: '8px 12px', fontSize: 13, width: 210,
           }}
         />
-        {(['all', 'alive', 'uncertain', 'eliminated'] as const).map((f) => {
+        {(['all', 'alive', 'partial', 'uncertain', 'eliminated'] as const).map((f) => {
           const active = filter === f;
-          const color = { all: C.accent, alive: C.alive, uncertain: C.uncertain, eliminated: C.dead }[f];
+          const color = { all: C.accent, alive: C.alive, partial: C.partial, uncertain: C.uncertain, eliminated: C.dead }[f];
           return (
             <button key={f} onClick={() => setFilter(f)} style={{
               background: active ? `${color}18` : C.surface,

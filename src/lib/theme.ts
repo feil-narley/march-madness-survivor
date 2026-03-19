@@ -24,6 +24,9 @@ export const C = {
   dead:     '#ef4444',          // red
   deadDim:  'rgba(239,68,68,0.12)',
 
+  partial:    '#60a5fa',         // lighter blue — one pick won, one pending
+  partialDim: 'rgba(96,165,250,0.12)',
+
   uncertain: '#e2e8f4',         // near-white / neutral
   uncDim:    'rgba(226,232,244,0.08)',
 
@@ -36,4 +39,4 @@ export const statusColor = (s: string): string =>
   ({ alive: C.alive, won: C.won, dead: C.dead, unknown: C.textDim }[s] ?? C.textDim);
 
 export const entryColor = (s: string): string =>
-  ({ alive: C.alive, eliminated: C.dead, uncertain: C.uncertain }[s] ?? C.textDim);
+  ({ alive: C.alive, partial: C.partial, uncertain: C.uncertain, eliminated: C.dead }[s] ?? C.textDim);
