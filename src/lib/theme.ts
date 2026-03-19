@@ -24,8 +24,8 @@ export const C = {
   dead:     '#ef4444',          // red
   deadDim:  'rgba(239,68,68,0.12)',
 
-  partial:    '#60a5fa',         // lighter blue — one pick won, one pending
-  partialDim: 'rgba(96,165,250,0.12)',
+  partial:    '#fde047',         // light yellow — one pick won, one pending
+  partialDim: 'rgba(253,224,71,0.12)',
 
   uncertain: '#e2e8f4',         // near-white / neutral
   uncDim:    'rgba(226,232,244,0.08)',
