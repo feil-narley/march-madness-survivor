@@ -170,10 +170,10 @@ export default function ScenarioAnalyzer({
                   No entries match "{search}"
                 </div>
               ) : (
-                filtered.map(({ entry, status, picks }) => {
+                filtered.map(({ entry, status, picks }, idx) => {
                   const ec = entryColor(status);
                   return (
-                    <div key={entry.name} style={{
+                    <div key={`${idx}-${entry.name}`} style={{
                       padding: '9px 14px',
                       borderBottom: `1px solid ${C.bg}`,
                       borderLeft: `3px solid ${ec}`,
