@@ -23,7 +23,8 @@ function clean(val: string | undefined): string {
 /**
  * Fetch entries from the current day's picks tab.
  * Expected columns (row 1 = headers):
- *   A: Name  B: Pick 1  C: Pick 2  [D: Paid  E: Buyback  F: Pick3 … optional]
+ *   A: Name  B: Status  C: Buyback  D: Pick 1  E: Pick 2
+ *   [F: Pick 3  G: Pick 4  H: Pick 5  I: Pick 6  J: Pick 7  — future days]
  */
 export async function fetchEntries(sheetName: string): Promise<Entry[]> {
   const rows = await fetchCsv(sheetName);
@@ -33,17 +34,20 @@ export async function fetchEntries(sheetName: string): Promise<Entry[]> {
     const r = rows[i];
     const name = clean(r[0]);
     if (!name) continue;
+
+    const buybackRaw = clean(r[2]).toLowerCase();
+
     entries.push({
       name,
-      pick1:   clean(r[1]),
-      pick2:   clean(r[2]),
-      paid:    clean(r[3]).toLowerCase() === 'y',
-      buyback: clean(r[4]).toLowerCase() === 'y',
-      pick3:   clean(r[5]),
-      pick4:   clean(r[6]),
-      pick5:   clean(r[7]),
-      pick6:   clean(r[8]),
-      pick7:   clean(r[9]),
+      sheetStatus: clean(r[1]).toLowerCase(),  // 'active' | 'eliminated' | etc.
+      buyback: buybackRaw === 'y' || buybackRaw === 'yes',
+      pick1: clean(r[3]),
+      pick2: clean(r[4]),
+      pick3: clean(r[5]),
+      pick4: clean(r[6]),
+      pick5: clean(r[7]),
+      pick6: clean(r[8]),
+      pick7: clean(r[9]),
     });
   }
 
@@ -53,7 +57,9 @@ export async function fetchEntries(sheetName: string): Promise<Entry[]> {
 /**
  * Fetch matchups from the current day's matchups tab.
  * Expected columns (row 1 = headers):
- *   A: Better Seed  B: Worse Seed  C: Favorite  D: Moneyline  E: Spread  F: Winner (blank = pending)
+ *   A: Better Seed  B: Worse Seed  C: Favorite  D: Moneyline  E: Spread
+ *   F: Final  (any non-empty value = game is locked)
+ *   G: Winner (winning team name — used when Final is set)
  */
 export async function fetchMatchups(sheetName: string): Promise<Matchup[]> {
   const rows = await fetchCsv(sheetName);
@@ -65,7 +71,9 @@ export async function fetchMatchups(sheetName: string): Promise<Matchup[]> {
     const worseSeed  = clean(r[1]);
     if (!betterSeed && !worseSeed) continue;
 
-    const winner = clean(r[5]);
+    const isFinal = clean(r[5]) !== '';       // col F: Final
+    const winnerRaw = clean(r[6]);            // col G: Winner
+
     matchups.push({
       id:         `${betterSeed}__${worseSeed}`,
       betterSeed,
@@ -73,7 +81,8 @@ export async function fetchMatchups(sheetName: string): Promise<Matchup[]> {
       favorite:   clean(r[2]),
       moneyline:  clean(r[3]),
       spread:     clean(r[4]),
-      winner:     winner || null,
+      // Locked only when Final column is set AND a winner is named
+      winner: isFinal && winnerRaw ? winnerRaw : null,
     });
   }
 

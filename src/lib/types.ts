@@ -3,10 +3,12 @@ export type EntryStatus = 'alive' | 'eliminated' | 'uncertain';
 
 export interface Entry {
   name: string;
+  /** 'active' | 'eliminated' — from the sheet's Status column */
+  sheetStatus: string;
+  buyback: boolean;
   pick1: string;
   pick2: string;
-  paid: boolean;
-  buyback: boolean;
+  // Future days — populated when sheet has more picks
   pick3: string;
   pick4: string;
   pick5: string;
@@ -21,7 +23,10 @@ export interface Matchup {
   favorite: string;
   moneyline: string;
   spread: string;
-  /** null = not yet played (unlocked); non-null = locked result (winning team name) */
+  /**
+   * null  = game not yet final — scenario selection allowed
+   * string = game is final (locked); value is the winning team name
+   */
   winner: string | null;
 }
 

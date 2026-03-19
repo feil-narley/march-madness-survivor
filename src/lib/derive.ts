@@ -65,6 +65,11 @@ export function getEntryStatus(
   entry: Entry,
   teamStatus: Record<string, TeamStatus>
 ): EntryStatus {
+  // If the sheet already marks this entry as eliminated (e.g. prior day loss), it's done
+  if (entry.sheetStatus && entry.sheetStatus !== 'active' && entry.sheetStatus !== '') {
+    return 'eliminated';
+  }
+
   const picks = getTodayPicks(entry);
   if (picks.length === 0) return 'uncertain';
 

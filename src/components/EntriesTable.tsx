@@ -48,8 +48,8 @@ export default function EntriesTable({ entries, matchups, scenario }: EntriesTab
   });
 
   const pickCols: { label: string; key: keyof Entry; today?: boolean }[] = [
-    { label: 'Pick 1', key: 'pick1' },
-    { label: 'Pick 2', key: 'pick2' },
+    { label: 'Pick 1', key: 'pick1', today: true },
+    { label: 'Pick 2', key: 'pick2', today: true },
     { label: 'Pick 3', key: 'pick3', today: true },
     { label: 'Pick 4', key: 'pick4', today: true },
     { label: 'Pick 5', key: 'pick5', today: true },
@@ -123,7 +123,6 @@ export default function EntriesTable({ entries, matchups, scenario }: EntriesTab
                   )}
                 </th>
               ))}
-              <th style={TH}>Paid</th>
               <th style={TH}>Buyback</th>
             </tr>
           </thead>
@@ -153,7 +152,6 @@ export default function EntriesTable({ entries, matchups, scenario }: EntriesTab
                       </td>
                     );
                   })}
-                  <td style={{ ...TD, color: e.paid ? C.alive : C.dead }}>{e.paid ? '✓' : '✗'}</td>
                   <td style={{ ...TD, color: e.buyback ? C.accent : C.textDim }}>{e.buyback ? '✓' : '—'}</td>
                 </tr>
               );
