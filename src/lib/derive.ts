@@ -102,7 +102,8 @@ export function computeTeamStats(
   const total = entries.length;
 
   entries.forEach((e) => {
-    getTodayPicks(e).forEach((pick) => {
+    // Deduplicate picks per entry so a team is counted at most once per entry
+    new Set(getTodayPicks(e)).forEach((pick) => {
       counts[pick] = (counts[pick] || 0) + 1;
     });
   });
