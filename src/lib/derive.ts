@@ -74,7 +74,7 @@ export function getEntryStatus(
   if (rawPicks.some(p => p === '-')) return 'eliminated';
 
   const picks = getTodayPicks(entry);
-  if (picks.length === 0) return 'uncertain';
+  if (picks.length === 0) return 'eliminated';
 
   let wonCount     = 0;
   let deadCount    = 0;

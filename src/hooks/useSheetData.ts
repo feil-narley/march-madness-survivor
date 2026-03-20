@@ -47,14 +47,17 @@ export function useSheetData(): UseSheetDataResult {
           if (!day1Map.has(e.name)) day1Map.set(e.name, e);
         }
 
-        // Mark inconsistentPicks where pick1/pick2 differ from day 1
-        const entries: Entry[] = day2Entries.map((e) => {
-          const d1 = day1Map.get(e.name);
-          const inconsistentPicks = d1
-            ? e.pick1 !== d1.pick1 || e.pick2 !== d1.pick2
-            : false;
-          return { ...e, inconsistentPicks };
-        });
+        // Only keep entries that have day 2 pick data (pick3 or pick4 must be present)
+        // Entries with no day 2 picks are excluded entirely from all views and counts
+        const entries: Entry[] = day2Entries
+          .filter((e) => (e.pick3 && e.pick3 !== '-') || (e.pick4 && e.pick4 !== '-'))
+          .map((e) => {
+            const d1 = day1Map.get(e.name);
+            const inconsistentPicks = d1
+              ? e.pick1 !== d1.pick1 || e.pick2 !== d1.pick2
+              : false;
+            return { ...e, inconsistentPicks };
+          });
 
         // Collect unique team names from tomorrow's matchups
         const tomorrowTeams = [
