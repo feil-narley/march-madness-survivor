@@ -118,14 +118,21 @@ export function computeTeamStats(
     .sort((a, b) => b.pickCount - a.pickCount);
 }
 
+/** Return only the current-day picks (pick3–pick7), excluding prior-day picks. */
+export function getCurrentDayPicks(entry: Entry): string[] {
+  return [entry.pick3, entry.pick4, entry.pick5, entry.pick6, entry.pick7]
+    .filter(p => p && p !== '-');
+}
+
 /** Compute how often each pair of teams is picked together. */
 export function computePairingMatrix(
-  entries: Entry[]
+  entries: Entry[],
+  pickFn: (e: Entry) => string[] = getTodayPicks
 ): Record<string, Record<string, number>> {
   const pairs: Record<string, Record<string, number>> = {};
 
   entries.forEach((e) => {
-    const picks = getTodayPicks(e);
+    const picks = pickFn(e);
     for (let i = 0; i < picks.length; i++) {
       for (let j = i + 1; j < picks.length; j++) {
         const a = picks[i], b = picks[j];

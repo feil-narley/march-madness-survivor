@@ -47,14 +47,14 @@ export default function EntriesTable({ entries, matchups, scenario }: EntriesTab
     return true;
   });
 
-  const pickCols: { label: string; key: keyof Entry; today?: boolean }[] = [
-    { label: 'Pick 1', key: 'pick1', today: true },
-    { label: 'Pick 2', key: 'pick2', today: true },
-    { label: 'Pick 3', key: 'pick3', today: true },
-    { label: 'Pick 4', key: 'pick4', today: true },
-    { label: 'Pick 5', key: 'pick5', today: true },
-    { label: 'Pick 6', key: 'pick6', today: true },
-    { label: 'Pick 7', key: 'pick7', today: true },
+  const pickCols: { label: string; key: keyof Entry; dayLabel?: string }[] = [
+    { label: 'Pick 1', key: 'pick1', dayLabel: 'Day 1' },
+    { label: 'Pick 2', key: 'pick2', dayLabel: 'Day 1' },
+    { label: 'Pick 3', key: 'pick3', dayLabel: 'Today' },
+    { label: 'Pick 4', key: 'pick4', dayLabel: 'Today' },
+    { label: 'Pick 5', key: 'pick5', dayLabel: 'Today' },
+    { label: 'Pick 6', key: 'pick6', dayLabel: 'Today' },
+    { label: 'Pick 7', key: 'pick7', dayLabel: 'Today' },
   ];
 
   const activeCols = pickCols.filter((c) => entries.some((e) => !!(e[c.key] as string)));
@@ -112,14 +112,14 @@ export default function EntriesTable({ entries, matchups, scenario }: EntriesTab
               <th style={TH}>Name</th>
               <th style={TH}>Status</th>
               {activeCols.map((c) => (
-                <th key={c.key} style={{ ...TH, color: c.today ? C.accent : C.textDim }}>
+                <th key={c.key} style={{ ...TH, color: c.dayLabel ? C.accent : C.textDim }}>
                   {c.label}
-                  {c.today && (
+                  {c.dayLabel && (
                     <span style={{
                       marginLeft: 5, fontSize: 9, fontWeight: 700,
                       color: C.accent, opacity: 0.7, letterSpacing: '0.05em',
                     }}>
-                      TODAY
+                      {c.dayLabel.toUpperCase()}
                     </span>
                   )}
                 </th>

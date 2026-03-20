@@ -1,6 +1,6 @@
 import { C, statusColor } from '../lib/theme';
 import type { Entry, Matchup, ScenarioSelections } from '../lib/types';
-import { buildTeamStatusMap, computePairingMatrix } from '../lib/derive';
+import { buildTeamStatusMap, computePairingMatrix, getCurrentDayPicks } from '../lib/derive';
 
 interface TeamPairingsProps {
   entries: Entry[];
@@ -10,7 +10,7 @@ interface TeamPairingsProps {
 
 export default function TeamPairings({ entries, matchups, scenario }: TeamPairingsProps) {
   const teamStatus = buildTeamStatusMap(matchups, scenario);
-  const matrix = computePairingMatrix(entries);
+  const matrix = computePairingMatrix(entries, getCurrentDayPicks);
 
   // Rows: alphabetical A → Z
   const rowTeams = Object.keys(matrix).sort();
