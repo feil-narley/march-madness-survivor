@@ -49,15 +49,12 @@ export function buildTeamStatusMap(
 
 /**
  * Return today's picks for an entry.
- * Day 1 sheets only have pick1/pick2; later days add pick3+.
- * We return all non-empty picks so this works for any day.
+ * Day 2+: picks 3-4 for regular entries; picks 3-7 for buybacks (picks 5-7 are buyback-only extras).
  */
 export function getTodayPicks(entry: Entry): string[] {
-  return [
-    entry.pick1, entry.pick2,
-    entry.pick3, entry.pick4,
-    entry.pick5, entry.pick6, entry.pick7,
-  ].filter(p => p && p !== '-');
+  const picks = [entry.pick3, entry.pick4];
+  if (entry.buyback) picks.push(entry.pick5, entry.pick6, entry.pick7);
+  return picks.filter(p => p && p !== '-');
 }
 
 /** Determine whether an entry survives given a team status map. */
@@ -70,8 +67,10 @@ export function getEntryStatus(
     return 'eliminated';
   }
 
-  // '-' in any pick slot means the entry missed the deadline
-  const rawPicks = [entry.pick1, entry.pick2, entry.pick3, entry.pick4, entry.pick5, entry.pick6, entry.pick7];
+  // '-' in today's pick slots means the entry missed the deadline
+  const rawPicks = entry.buyback
+    ? [entry.pick3, entry.pick4, entry.pick5, entry.pick6, entry.pick7]
+    : [entry.pick3, entry.pick4];
   if (rawPicks.some(p => p === '-')) return 'eliminated';
 
   const picks = getTodayPicks(entry);
