@@ -2,6 +2,18 @@ import { C, statusColor } from '../lib/theme';
 import type { Entry, Matchup, ScenarioSelections } from '../lib/types';
 import { buildTeamStatusMap, computeTeamStats, getEntryStatus } from '../lib/derive';
 
+function countStatuses(entries: Entry[], teamStatus: Record<string, import('../lib/types').TeamStatus>) {
+  let alive = 0, partial = 0, uncertain = 0, eliminated = 0;
+  entries.forEach((e) => {
+    const s = getEntryStatus(e, teamStatus);
+    if (s === 'alive')           alive++;
+    else if (s === 'partial')    partial++;
+    else if (s === 'uncertain')  uncertain++;
+    else                         eliminated++;
+  });
+  return { alive, partial, uncertain, eliminated };
+}
+
 interface DashboardProps {
   entries: Entry[];
   matchups: Matchup[];
@@ -11,21 +23,13 @@ interface DashboardProps {
 export default function Dashboard({ entries, matchups, scenario }: DashboardProps) {
   const teamStatus = buildTeamStatusMap(matchups, scenario);
   const teamStats  = computeTeamStats(entries, teamStatus);
-  const survival   = entries.map((e) => getEntryStatus(e, teamStatus));
 
-  const alive      = survival.filter((s) => s === 'alive').length;
-  const partial    = survival.filter((s) => s === 'partial').length;
-  const eliminated = survival.filter((s) => s === 'eliminated').length;
-  const uncertain  = survival.filter((s) => s === 'uncertain').length;
+  const { alive, partial, uncertain, eliminated } = countStatuses(entries, teamStatus);
+  const buybackEntries = entries.filter((e) => e.buyback);
+  const bb = countStatuses(buybackEntries, teamStatus);
 
   const locked  = matchups.filter((m) => m.winner !== null);
   const pending = matchups.filter((m) => m.winner === null);
-
-  const teamCounts = {
-    alive: Object.values(teamStatus).filter((s) => s === 'alive').length,
-    won:   Object.values(teamStatus).filter((s) => s === 'won').length,
-    dead:  Object.values(teamStatus).filter((s) => s === 'dead').length,
-  };
 
   return (
     <div style={{ padding: '0 28px 28px', maxWidth: 1440, margin: '0 auto' }}>
@@ -42,15 +46,28 @@ export default function Dashboard({ entries, matchups, scenario }: DashboardProp
           ].map((s) => (
             <StatRow key={s.label} label={s.label} value={s.value} color={s.color} />
           ))}
+          {buybackEntries.length > 0 && (
+            <>
+              <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 14, marginBottom: 4 }}>
+                Buybacks Only ({buybackEntries.length})
+              </div>
+              {[
+                { label: 'Survived',   value: bb.alive,     color: C.alive },
+                { label: 'Partial',    value: bb.partial,   color: C.partial },
+                { label: 'Uncertain',  value: bb.uncertain, color: C.uncertain },
+                { label: 'Eliminated', value: bb.eliminated,color: C.dead },
+              ].map((s) => (
+                <StatRow key={`bb-${s.label}`} label={s.label} value={s.value} color={s.color} small />
+              ))}
+            </>
+          )}
         </Card>
 
         {/* Game Status */}
         <Card title="Today's Games">
           {[
-            { label: 'Games Final',       value: locked.length,       color: C.alive },
-            { label: 'Games Pending',     value: pending.length,      color: C.uncertain },
-            { label: 'Teams Still Alive', value: teamCounts.alive,    color: C.alive },
-            { label: 'Teams Eliminated',  value: teamCounts.dead,     color: C.dead },
+            { label: 'Games Final',   value: locked.length,  color: C.alive },
+            { label: 'Games Pending', value: pending.length, color: C.uncertain },
           ].map((s) => (
             <StatRow key={s.label} label={s.label} value={s.value} color={s.color} />
           ))}
@@ -104,9 +121,6 @@ export default function Dashboard({ entries, matchups, scenario }: DashboardProp
                 }}>
                   {m.worseSeed}
                 </span>
-                <span style={{ color: C.alive, fontWeight: 700, fontSize: 11, marginLeft: 6 }}>
-                  W
-                </span>
               </div>
             ))}
           </Card>
@@ -130,14 +144,14 @@ function Card({ title, children }: { title: string; children: React.ReactNode })
   );
 }
 
-function StatRow({ label, value, color }: { label: string; value: number; color: string }) {
+function StatRow({ label, value, color, small }: { label: string; value: number; color: string; small?: boolean }) {
   return (
     <div style={{
       display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-      padding: '9px 0', borderBottom: `1px solid ${C.border}`,
+      padding: small ? '5px 0' : '9px 0', borderBottom: `1px solid ${C.border}`,
     }}>
-      <span style={{ fontSize: 12, color: C.textMid }}>{label}</span>
-      <span style={{ fontSize: 22, fontWeight: 700, color, lineHeight: 1 }}>{value}</span>
+      <span style={{ fontSize: small ? 11 : 12, color: C.textMid }}>{label}</span>
+      <span style={{ fontSize: small ? 16 : 22, fontWeight: 700, color, lineHeight: 1 }}>{value}</span>
     </div>
   );
 }

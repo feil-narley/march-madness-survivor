@@ -8,12 +8,13 @@ export interface Entry {
   buyback: boolean;
   pick1: string;
   pick2: string;
-  // Future days — populated when sheet has more picks
   pick3: string;
   pick4: string;
   pick5: string;
   pick6: string;
   pick7: string;
+  /** True when pick1/pick2 in the current day's sheet differ from day 1's picks */
+  inconsistentPicks?: boolean;
 }
 
 export interface Matchup {

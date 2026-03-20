@@ -5,6 +5,7 @@ import type { Entry, Matchup } from '../lib/types';
 export interface SheetData {
   entries: Entry[];
   matchups: Matchup[];
+  tomorrowTeams: string[];
 }
 
 interface UseSheetDataResult {
@@ -15,8 +16,10 @@ interface UseSheetDataResult {
 }
 
 // Update these constants whenever the active day changes
-const PICKS_SHEET   = 'picks - day 1';
-const MATCHUPS_SHEET = 'matchups - day 1';
+const PICKS_SHEET        = 'picks - day 2';
+const PICKS_DAY1_SHEET   = 'picks - day 1';
+const MATCHUPS_SHEET     = 'matchups - day 2';
+const TOMORROW_MATCHUPS  = 'matchups - day 3';
 
 export function useSheetData(): UseSheetDataResult {
   const [data, setData]       = useState<SheetData | null>(null);
@@ -29,12 +32,40 @@ export function useSheetData(): UseSheetDataResult {
     setLoading(true);
     setError(null);
 
-    Promise.all([fetchEntries(PICKS_SHEET), fetchMatchups(MATCHUPS_SHEET)])
-      .then(([entries, matchups]) => {
-        if (!cancelled) {
-          setData({ entries, matchups });
-          setLoading(false);
+    Promise.all([
+      fetchEntries(PICKS_SHEET),
+      fetchEntries(PICKS_DAY1_SHEET),
+      fetchMatchups(MATCHUPS_SHEET),
+      fetchMatchups(TOMORROW_MATCHUPS).catch(() => [] as Matchup[]),
+    ])
+      .then(([day2Entries, day1Entries, matchups, day3Matchups]) => {
+        if (cancelled) return;
+
+        // Build day 1 lookup by name for pick comparison
+        const day1Map = new Map<string, Entry>();
+        for (const e of day1Entries) {
+          if (!day1Map.has(e.name)) day1Map.set(e.name, e);
         }
+
+        // Mark inconsistentPicks where pick1/pick2 differ from day 1
+        const entries: Entry[] = day2Entries.map((e) => {
+          const d1 = day1Map.get(e.name);
+          const inconsistentPicks = d1
+            ? e.pick1 !== d1.pick1 || e.pick2 !== d1.pick2
+            : false;
+          return { ...e, inconsistentPicks };
+        });
+
+        // Collect unique team names from tomorrow's matchups
+        const tomorrowTeams = [
+          ...new Set([
+            ...day3Matchups.map((m) => m.betterSeed).filter(Boolean),
+            ...day3Matchups.map((m) => m.worseSeed).filter(Boolean),
+          ]),
+        ].sort();
+
+        setData({ entries, matchups, tomorrowTeams });
+        setLoading(false);
       })
       .catch((err: Error) => {
         if (!cancelled) {

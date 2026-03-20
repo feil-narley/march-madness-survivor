@@ -1,6 +1,6 @@
 import { C } from '../lib/theme';
 
-export type Tab = 'dashboard' | 'entries' | 'teams' | 'pairings' | 'scenario';
+export type Tab = 'dashboard' | 'entries' | 'teams' | 'pairings' | 'scenario' | 'tomorrow';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'dashboard',  label: 'Dashboard' },
@@ -8,6 +8,7 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'teams',      label: 'Team Frequency' },
   { id: 'pairings',   label: 'Team Pairings' },
   { id: 'scenario',   label: 'Scenario Analyzer' },
+  { id: 'tomorrow',   label: "Tomorrow's Picks" },
 ];
 
 interface HeaderProps {
@@ -37,7 +38,7 @@ export default function Header({ activeTab, onTabChange, onRefresh, loading }: H
                 March Madness Survivor
               </div>
               <div style={{ fontSize: 11, color: C.textDim, marginTop: 1, letterSpacing: '0.04em', textTransform: 'uppercase' }}>
-                2025 Tournament · Day 1
+                2025 Tournament · Day 2
               </div>
             </div>
           </div>

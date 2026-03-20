@@ -7,6 +7,7 @@ import EntriesTable from './components/EntriesTable';
 import TeamFrequency from './components/TeamFrequency';
 import TeamPairings from './components/TeamPairings';
 import ScenarioAnalyzer from './components/ScenarioAnalyzer';
+import TomorrowPicks from './components/TomorrowPicks';
 import { useSheetData } from './hooks/useSheetData';
 import type { ScenarioSelections } from './lib/types';
 
@@ -75,6 +76,14 @@ export default function App() {
                 scenario={scenario}
                 onScenarioChange={handleScenarioChange}
                 onReset={() => setScenario({})}
+              />
+            )}
+            {activeTab === 'tomorrow' && (
+              <TomorrowPicks
+                entries={data.entries}
+                matchups={data.matchups}
+                scenario={scenario}
+                tomorrowTeams={data.tomorrowTeams}
               />
             )}
           </main>

@@ -28,6 +28,8 @@ export default function ScenarioAnalyzer({
     picks: getTodayPicks(e),
   }));
 
+  const bbSurvival = survival.filter((s) => s.entry.buyback);
+
   // Match if any word in the name starts with the search term (not mid-word)
   const filtered = search
     ? survival.filter((s) =>
@@ -41,9 +43,16 @@ export default function ScenarioAnalyzer({
   const elimCount      = survival.filter((s) => s.status === 'eliminated').length;
   const uncertainCount = survival.filter((s) => s.status === 'uncertain').length;
 
-  function pct(n: number): string {
-    if (total === 0) return '0.0%';
-    return `${((n / total) * 100).toFixed(1)}%`;
+  const bbTotal        = bbSurvival.length;
+  const bbAlive        = bbSurvival.filter((s) => s.status === 'alive').length;
+  const bbPartial      = bbSurvival.filter((s) => s.status === 'partial').length;
+  const bbElim         = bbSurvival.filter((s) => s.status === 'eliminated').length;
+  const bbUncertain    = bbSurvival.filter((s) => s.status === 'uncertain').length;
+
+  function pct(n: number, t?: number): string {
+    const base = t ?? total;
+    if (base === 0) return '0.0%';
+    return `${((n / base) * 100).toFixed(1)}%`;
   }
 
   const hasScenario = Object.values(scenario).some((v) => v !== null);
@@ -124,6 +133,31 @@ export default function ScenarioAnalyzer({
                 </span>
               </div>
             ))}
+
+            {bbTotal > 0 && (
+              <>
+                <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 14, marginBottom: 2 }}>
+                  Buybacks Only ({bbTotal})
+                </div>
+                {[
+                  { label: 'Would Survive', value: bbAlive,    color: C.alive,     p: pct(bbAlive, bbTotal) },
+                  { label: 'Partial',       value: bbPartial,  color: C.partial,   p: pct(bbPartial, bbTotal) },
+                  { label: 'Uncertain',     value: bbUncertain,color: C.uncertain, p: pct(bbUncertain, bbTotal) },
+                  { label: 'Eliminated',    value: bbElim,     color: C.dead,      p: pct(bbElim, bbTotal) },
+                ].map((s) => (
+                  <div key={`bb-${s.label}`} style={{
+                    display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                    padding: '5px 0', borderBottom: `1px solid ${C.border}`,
+                  }}>
+                    <span style={{ fontSize: 11, color: C.textMid }}>{s.label}</span>
+                    <span style={{ display: 'flex', alignItems: 'baseline', gap: 4 }}>
+                      <span style={{ fontSize: 16, fontWeight: 700, color: s.color, lineHeight: 1 }}>{s.value}</span>
+                      <span style={{ fontSize: 10, color: s.color, opacity: 0.7 }}>({s.p})</span>
+                    </span>
+                  </div>
+                ))}
+              </>
+            )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 12, fontSize: 11, color: C.textDim }}>
               <span>{locked} games final</span>

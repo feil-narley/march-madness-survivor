@@ -125,6 +125,7 @@ export default function EntriesTable({ entries, matchups, scenario }: EntriesTab
                 </th>
               ))}
               <th style={TH}>Buyback</th>
+              <th style={TH}>Picks</th>
             </tr>
           </thead>
           <tbody>
@@ -154,6 +155,19 @@ export default function EntriesTable({ entries, matchups, scenario }: EntriesTab
                     );
                   })}
                   <td style={{ ...TD, color: e.buyback ? C.accent : C.textDim }}>{e.buyback ? '✓' : '—'}</td>
+                  <td style={TD}>
+                    {e.inconsistentPicks && (
+                      <span style={{
+                        fontSize: 10, fontWeight: 700,
+                        color: C.uncertain, background: `${C.uncertain}15`,
+                        border: `1px solid ${C.uncertain}40`,
+                        borderRadius: 4, padding: '2px 7px',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        ⚠ Pick mismatch
+                      </span>
+                    )}
+                  </td>
                 </tr>
               );
             })}
