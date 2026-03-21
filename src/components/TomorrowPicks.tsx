@@ -56,6 +56,15 @@ export default function TomorrowPicks({
   // All picks used by each surviving entry (pick1 through pick7)
   const allPickFields: (keyof Entry)[] = ['pick1','pick2','pick3','pick4','pick5','pick6','pick7'];
 
+  // Numeric spread per team: negative = favorite, positive = underdog, 0 = unknown
+  function numericSpread(team: string): number {
+    const m = tomorrowMatchups.find((mu) => mu.betterSeed === team || mu.worseSeed === team);
+    if (!m || !m.spread) return 0;
+    const n = parseFloat(m.spread.replace(/^[+-]/, ''));
+    if (isNaN(n)) return 0;
+    return m.favorite === team ? -n : n;
+  }
+
   // For each tomorrow team, count surviving entries that have ALREADY used it
   const rows = tomorrowTeams.map((team) => {
     const usedCount = survivingEntries.filter((e) =>
@@ -67,7 +76,7 @@ export default function TomorrowPicks({
 
     const available = survivingCount - usedCount;
     return { team, usedCount, available };
-  }).sort((a, b) => b.available - a.available);
+  }).sort((a, b) => numericSpread(a.team) - numericSpread(b.team));
 
   const maxAvailable = rows.reduce((m, r) => Math.max(m, r.available), 0);
 
