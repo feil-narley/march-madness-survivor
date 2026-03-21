@@ -7,6 +7,18 @@ interface TomorrowPicksProps {
   matchups: Matchup[];
   scenario: ScenarioSelections;
   tomorrowTeams: string[];
+  tomorrowMatchups: Matchup[];
+}
+
+/** Returns the spread label for a team: (-X.X) if favorite, (+X.X) if underdog, '' if no data. */
+function spreadLabel(team: string, matchups: Matchup[]): string {
+  const m = matchups.find((mu) => mu.betterSeed === team || mu.worseSeed === team);
+  if (!m || !m.spread) return '';
+  const raw = m.spread.trim().replace(/^[+-]/, '');  // strip any existing sign
+  const n = parseFloat(raw);
+  if (isNaN(n) || n === 0) return '';
+  const isFav = m.favorite === team;
+  return isFav ? `(-${n})` : `(+${n})`;
 }
 
 export default function TomorrowPicks({
@@ -14,6 +26,7 @@ export default function TomorrowPicks({
   matchups,
   scenario,
   tomorrowTeams,
+  tomorrowMatchups,
 }: TomorrowPicksProps) {
   const teamStatus = buildTeamStatusMap(matchups, scenario);
 
@@ -73,9 +86,14 @@ export default function TomorrowPicks({
             const barPct = maxAvailable > 0 ? (available / maxAvailable) * 100 : 0;
             return (
               <div key={team} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                {/* Team name */}
-                <div style={{ width: 160, minWidth: 160, fontSize: 12, fontWeight: 600, color: C.text, whiteSpace: 'nowrap' }}>
-                  {team}
+                {/* Team name + spread */}
+                <div style={{ width: 200, minWidth: 200, display: 'flex', alignItems: 'baseline', gap: 6, whiteSpace: 'nowrap' }}>
+                  <span style={{ fontSize: 12, fontWeight: 600, color: C.text }}>{team}</span>
+                  {spreadLabel(team, tomorrowMatchups) && (
+                    <span style={{ fontSize: 11, color: C.textDim, fontWeight: 400 }}>
+                      {spreadLabel(team, tomorrowMatchups)}
+                    </span>
+                  )}
                 </div>
 
                 {/* Bar */}

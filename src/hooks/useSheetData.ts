@@ -6,6 +6,7 @@ export interface SheetData {
   entries: Entry[];
   matchups: Matchup[];
   tomorrowTeams: string[];
+  tomorrowMatchups: Matchup[];
 }
 
 interface UseSheetDataResult {
@@ -69,7 +70,7 @@ export function useSheetData(): UseSheetDataResult {
           ]),
         ].sort();
 
-        setData({ entries, matchups, tomorrowTeams });
+        setData({ entries, matchups, tomorrowTeams, tomorrowMatchups });
         setLoading(false);
       })
       .catch((err: Error) => {
