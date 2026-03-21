@@ -50,11 +50,13 @@ export default function EntriesTable({ entries, matchups, scenario }: EntriesTab
   const pickCols: { label: string; key: keyof Entry; dayLabel?: string }[] = [
     { label: 'Pick 1', key: 'pick1', dayLabel: 'Day 1' },
     { label: 'Pick 2', key: 'pick2', dayLabel: 'Day 1' },
-    { label: 'Pick 3', key: 'pick3', dayLabel: 'Today' },
-    { label: 'Pick 4', key: 'pick4', dayLabel: 'Today' },
-    { label: 'Pick 5', key: 'pick5', dayLabel: 'Today' },
-    { label: 'Pick 6', key: 'pick6', dayLabel: 'Today' },
-    { label: 'Pick 7', key: 'pick7', dayLabel: 'Today' },
+    { label: 'Pick 3', key: 'pick3', dayLabel: 'Day 2' },
+    { label: 'Pick 4', key: 'pick4', dayLabel: 'Day 2' },
+    { label: 'Pick 5', key: 'pick5', dayLabel: 'Day 2' },
+    { label: 'Pick 6', key: 'pick6', dayLabel: 'Day 2' },
+    { label: 'Pick 7', key: 'pick7', dayLabel: 'Day 2' },
+    { label: 'Pick 8', key: 'pick8', dayLabel: 'Today' },
+    { label: 'Pick 9', key: 'pick9', dayLabel: 'Today' },
   ];
 
   const activeCols = pickCols.filter((c) => entries.some((e) => !!(e[c.key] as string)));

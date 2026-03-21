@@ -49,12 +49,10 @@ export function buildTeamStatusMap(
 
 /**
  * Return today's picks for an entry.
- * Day 2+: picks 3-4 for regular entries; picks 3-7 for buybacks (picks 5-7 are buyback-only extras).
+ * Day 3: everyone has pick8 and pick9 (2 picks each, no buyback distinction).
  */
 export function getTodayPicks(entry: Entry): string[] {
-  const picks = [entry.pick3, entry.pick4];
-  if (entry.buyback) picks.push(entry.pick5, entry.pick6, entry.pick7);
-  return picks.filter(p => p && p !== '-');
+  return [entry.pick8, entry.pick9].filter(p => p && p !== '-');
 }
 
 /** Determine whether an entry survives given a team status map. */
@@ -68,9 +66,7 @@ export function getEntryStatus(
   }
 
   // '-' in today's pick slots means the entry missed the deadline
-  const rawPicks = entry.buyback
-    ? [entry.pick3, entry.pick4, entry.pick5, entry.pick6, entry.pick7]
-    : [entry.pick3, entry.pick4];
+  const rawPicks = [entry.pick8, entry.pick9];
   if (rawPicks.some(p => p === '-')) return 'eliminated';
 
   const picks = getTodayPicks(entry);
@@ -118,10 +114,9 @@ export function computeTeamStats(
     .sort((a, b) => b.pickCount - a.pickCount);
 }
 
-/** Return only the current-day picks (pick3–pick7), excluding prior-day picks. */
+/** Return only the current-day picks (pick8–pick9), excluding prior-day picks. */
 export function getCurrentDayPicks(entry: Entry): string[] {
-  return [entry.pick3, entry.pick4, entry.pick5, entry.pick6, entry.pick7]
-    .filter(p => p && p !== '-');
+  return [entry.pick8, entry.pick9].filter(p => p && p !== '-');
 }
 
 /** Compute how often each pair of teams is picked together. */

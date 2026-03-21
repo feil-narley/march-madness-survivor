@@ -7,9 +7,6 @@ const STATUS_LABEL: Record<string, string> = {
   alive: 'Alive', won: 'Won', dead: 'Eliminated', unknown: '—',
 };
 
-// Color for buyback picks — yellow so it contrasts clearly with the blue regular picks
-const BB_COLOR = C.partial;
-
 type Filter = 'all' | 'regular' | 'buyback';
 
 interface TeamFrequencyProps {
@@ -25,16 +22,9 @@ export default function TeamFrequency({ entries, matchups, scenario }: TeamFrequ
 
   const regularEntries = entries.filter((e) => !e.buyback);
   const buybackEntries = entries.filter((e) => e.buyback);
+  const activeEntries  = filter === 'regular' ? regularEntries : filter === 'buyback' ? buybackEntries : entries;
 
-  // Stats for whatever is currently selected
-  const activeEntries = filter === 'regular' ? regularEntries : filter === 'buyback' ? buybackEntries : entries;
   const stats = computeTeamStats(activeEntries, teamStatus);
-
-  // For "all" mode, also compute per-subset stats for split display
-  const regularStats = computeTeamStats(regularEntries, teamStatus);
-  const buybackStats = computeTeamStats(buybackEntries, teamStatus);
-  const regularMap = new Map(regularStats.map((s) => [s.name, s]));
-  const buybackMap = new Map(buybackStats.map((s) => [s.name, s]));
 
   if (stats.length === 0) {
     return <div style={{ padding: 40, textAlign: 'center', color: C.textDim }}>No pick data available.</div>;
@@ -55,12 +45,11 @@ export default function TeamFrequency({ entries, matchups, scenario }: TeamFrequ
       <div style={{ display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' }}>
         {filterButtons.map(({ id, label, count }) => {
           const active = filter === id;
-          const color = id === 'buyback' ? BB_COLOR : C.accent;
           return (
             <button key={id} onClick={() => setFilter(id)} style={{
-              background: active ? `${color}18` : C.surface,
-              color: active ? color : C.textMid,
-              border: `1px solid ${active ? `${color}50` : C.border}`,
+              background: active ? `${C.accent}18` : C.surface,
+              color: active ? C.accent : C.textMid,
+              border: `1px solid ${active ? `${C.accent}50` : C.border}`,
               borderRadius: 6, padding: '7px 16px', fontSize: 12, fontWeight: 600,
               cursor: 'pointer', transition: 'all 0.15s',
             }}>
@@ -69,18 +58,6 @@ export default function TeamFrequency({ entries, matchups, scenario }: TeamFrequ
             </button>
           );
         })}
-        {filter === 'all' && buybackEntries.length > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginLeft: 8, fontSize: 11, color: C.textDim }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 10, height: 10, borderRadius: 2, background: C.accent, display: 'inline-block' }} />
-              Regular picks
-            </span>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-              <span style={{ width: 10, height: 10, borderRadius: 2, background: BB_COLOR, display: 'inline-block' }} />
-              Buyback picks
-            </span>
-          </div>
-        )}
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
@@ -90,61 +67,28 @@ export default function TeamFrequency({ entries, matchups, scenario }: TeamFrequ
           <div style={{ marginBottom: 18 }}>
             <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Pick Frequency</div>
             <div style={{ fontSize: 12, color: C.textDim, marginTop: 2 }}>
-              Today's picks · {filter === 'all' ? 'all entries' : filter === 'buyback' ? 'buyback entries only' : 'regular entries only'}
+              Today's picks ·{' '}
+              {filter === 'all' ? 'all entries' : filter === 'buyback' ? 'buyback entries only' : 'regular entries only'}
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
             {stats.map((t) => {
               const color = statusColor(t.status);
-              const reg = regularMap.get(t.name);
-              const bb  = buybackMap.get(t.name);
-
               return (
                 <div key={t.name}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, alignItems: 'baseline', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4, alignItems: 'baseline' }}>
                     <span style={{ fontSize: 13, color, fontWeight: 600 }}>{t.name}</span>
-                    {filter === 'all' ? (
-                      <span style={{ display: 'flex', gap: 10, fontSize: 11, flexShrink: 0 }}>
-                        <span style={{ color: C.accent }}>
-                          {reg?.pickCount ?? 0} ({reg?.pickPercent.toFixed(1) ?? '0.0'}%)
-                        </span>
-                        {bb && bb.pickCount > 0 && (
-                          <span style={{ color: BB_COLOR }}>
-                            +{bb.pickCount} BB ({bb.pickPercent.toFixed(1)}%)
-                          </span>
-                        )}
-                      </span>
-                    ) : (
-                      <span style={{ fontSize: 11, color: C.textMid }}>
-                        {t.pickCount} picks · {t.pickPercent.toFixed(1)}%
-                      </span>
-                    )}
+                    <span style={{ fontSize: 11, color: C.textMid }}>
+                      {t.pickCount} picks · {t.pickPercent.toFixed(1)}%
+                    </span>
                   </div>
-                  {/* Bar */}
-                  <div style={{ background: C.bg, borderRadius: 4, height: 7, overflow: 'hidden', display: 'flex' }}>
-                    {filter === 'all' ? (
-                      <>
-                        <div style={{
-                          width: `${((reg?.pickCount ?? 0) / maxCount) * 100}%`, height: '100%',
-                          background: C.accent, opacity: t.status === 'dead' ? 0.3 : 1,
-                          transition: 'width 0.4s ease',
-                        }} />
-                        {bb && bb.pickCount > 0 && (
-                          <div style={{
-                            width: `${(bb.pickCount / maxCount) * 100}%`, height: '100%',
-                            background: BB_COLOR, opacity: t.status === 'dead' ? 0.3 : 0.85,
-                            transition: 'width 0.4s ease',
-                          }} />
-                        )}
-                      </>
-                    ) : (
-                      <div style={{
-                        width: `${(t.pickCount / maxCount) * 100}%`, height: '100%',
-                        background: filter === 'buyback' ? BB_COLOR : color,
-                        opacity: t.status === 'dead' ? 0.3 : 1,
-                        transition: 'width 0.4s ease',
-                      }} />
-                    )}
+                  <div style={{ background: C.bg, borderRadius: 4, height: 7, overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${(t.pickCount / maxCount) * 100}%`, height: '100%',
+                      background: color, borderRadius: 4,
+                      opacity: t.status === 'dead' ? 0.3 : 1,
+                      transition: 'width 0.4s ease',
+                    }} />
                   </div>
                 </div>
               );
@@ -161,17 +105,14 @@ export default function TeamFrequency({ entries, matchups, scenario }: TeamFrequ
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
             <thead>
               <tr style={{ borderBottom: `1px solid ${C.border}` }}>
-                {filter === 'all'
-                  ? ['#', 'Team', 'Status', 'Regular', 'Buyback'].map((h) => <th key={h} style={TH}>{h}</th>)
-                  : ['#', 'Team', 'Status', 'Picks', '%'].map((h) => <th key={h} style={TH}>{h}</th>)
-                }
+                {['#', 'Team', 'Status', 'Picks', '%'].map((h) => (
+                  <th key={h} style={TH}>{h}</th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {stats.map((t, i) => {
                 const color = statusColor(t.status);
-                const reg = regularMap.get(t.name);
-                const bb  = buybackMap.get(t.name);
                 return (
                   <tr key={t.name} style={{
                     borderBottom: `1px solid ${C.bg}`,
@@ -185,29 +126,8 @@ export default function TeamFrequency({ entries, matchups, scenario }: TeamFrequ
                         {STATUS_LABEL[t.status] ?? t.status}
                       </span>
                     </td>
-                    {filter === 'all' ? (
-                      <>
-                        <td style={{ ...TD, color: C.accent, fontWeight: 600 }}>
-                          {reg?.pickCount ?? 0}
-                          <span style={{ fontSize: 11, fontWeight: 400, color: C.textDim, marginLeft: 4 }}>
-                            ({reg?.pickPercent.toFixed(1) ?? '0.0'}%)
-                          </span>
-                        </td>
-                        <td style={{ ...TD, color: BB_COLOR, fontWeight: 600 }}>
-                          {bb?.pickCount ?? 0}
-                          {(bb?.pickCount ?? 0) > 0 && (
-                            <span style={{ fontSize: 11, fontWeight: 400, color: C.textDim, marginLeft: 4 }}>
-                              ({bb!.pickPercent.toFixed(1)}%)
-                            </span>
-                          )}
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td style={{ ...TD, color: C.text, fontWeight: 600 }}>{t.pickCount}</td>
-                        <td style={{ ...TD, color: C.textMid }}>{t.pickPercent.toFixed(1)}%</td>
-                      </>
-                    )}
+                    <td style={{ ...TD, color: C.text, fontWeight: 600 }}>{t.pickCount}</td>
+                    <td style={{ ...TD, color: C.textMid }}>{t.pickPercent.toFixed(1)}%</td>
                   </tr>
                 );
               })}
