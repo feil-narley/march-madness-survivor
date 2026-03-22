@@ -48,8 +48,10 @@ export async function fetchEntries(sheetName: string): Promise<Entry[]> {
       pick5: clean(r[7]),
       pick6: clean(r[8]),
       pick7: clean(r[9]),
-      pick8: clean(r[10]),
-      pick9: clean(r[11]),
+      pick8:  clean(r[10]),
+      pick9:  clean(r[11]),
+      pick10: clean(r[12]),
+      pick11: clean(r[13]),
     });
   }
 

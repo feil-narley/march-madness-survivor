@@ -49,10 +49,12 @@ export function buildTeamStatusMap(
 
 /**
  * Return today's picks for an entry.
- * Day 3: everyone has pick8 and pick9 (2 picks each, no buyback distinction).
+ * Day 4: everyone has pick10 and pick11.
+ * "NOT LISTED" is kept — it is treated as a pending/unknown team so the entry
+ * stays uncertain rather than being eliminated (unless the other pick lost).
  */
 export function getTodayPicks(entry: Entry): string[] {
-  return [entry.pick8, entry.pick9].filter(p => p && p !== '-');
+  return [entry.pick10, entry.pick11].filter(p => p && p !== '-');
 }
 
 /** Determine whether an entry survives given a team status map. */
@@ -66,7 +68,7 @@ export function getEntryStatus(
   }
 
   // '-' in today's pick slots means the entry missed the deadline
-  const rawPicks = [entry.pick8, entry.pick9];
+  const rawPicks = [entry.pick10, entry.pick11];
   if (rawPicks.some(p => p === '-')) return 'eliminated';
 
   const picks = getTodayPicks(entry);
@@ -114,9 +116,10 @@ export function computeTeamStats(
     .sort((a, b) => b.pickCount - a.pickCount);
 }
 
-/** Return only the current-day picks (pick8–pick9), excluding prior-day picks. */
+/** Return only the current-day picks (pick10–pick11), excluding prior-day picks and "NOT LISTED" placeholders. */
 export function getCurrentDayPicks(entry: Entry): string[] {
-  return [entry.pick8, entry.pick9].filter(p => p && p !== '-');
+  return [entry.pick10, entry.pick11]
+    .filter(p => p && p !== '-' && p.toUpperCase() !== 'NOT LISTED');
 }
 
 /** Compute how often each pair of teams is picked together. */
