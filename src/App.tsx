@@ -85,6 +85,8 @@ export default function App() {
                 scenario={scenario}
                 tomorrowTeams={data.tomorrowTeams}
                 tomorrowMatchups={data.tomorrowMatchups}
+                dayAfterTeams={data.dayAfterTeams}
+                dayAfterMatchups={data.dayAfterMatchups}
               />
             )}
           </main>

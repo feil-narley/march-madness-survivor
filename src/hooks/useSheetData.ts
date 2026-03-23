@@ -7,6 +7,8 @@ export interface SheetData {
   matchups: Matchup[];
   tomorrowTeams: string[];
   tomorrowMatchups: Matchup[];
+  dayAfterTeams: string[];
+  dayAfterMatchups: Matchup[];
 }
 
 interface UseSheetDataResult {
@@ -38,8 +40,9 @@ export function useSheetData(): UseSheetDataResult {
       fetchEntries(PICKS_PREV_SHEET),
       fetchMatchups(MATCHUPS_SHEET),
       fetchMatchups(TOMORROW_MATCHUPS).catch(() => [] as Matchup[]),
+      fetchMatchups('matchups - day 6').catch(() => [] as Matchup[]),
     ])
-      .then(([todayEntries, prevEntries, matchups, tomorrowMatchups]) => {
+      .then(([todayEntries, prevEntries, matchups, tomorrowMatchups, dayAfterMatchups]) => {
         if (cancelled) return;
 
         // Build prior day lookup by name for pick comparison
@@ -64,7 +67,6 @@ export function useSheetData(): UseSheetDataResult {
             return { ...e, inconsistentPicks };
           });
 
-        // Collect unique team names from tomorrow's matchups
         const tomorrowTeams = [
           ...new Set([
             ...tomorrowMatchups.map((m) => m.betterSeed).filter(Boolean),
@@ -72,7 +74,14 @@ export function useSheetData(): UseSheetDataResult {
           ]),
         ].sort();
 
-        setData({ entries, matchups, tomorrowTeams, tomorrowMatchups });
+        const dayAfterTeams = [
+          ...new Set([
+            ...dayAfterMatchups.map((m) => m.betterSeed).filter(Boolean),
+            ...dayAfterMatchups.map((m) => m.worseSeed).filter(Boolean),
+          ]),
+        ].sort();
+
+        setData({ entries, matchups, tomorrowTeams, tomorrowMatchups, dayAfterTeams, dayAfterMatchups });
         setLoading(false);
       })
       .catch((err: Error) => {
