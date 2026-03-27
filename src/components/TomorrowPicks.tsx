@@ -15,7 +15,7 @@ interface TomorrowPicksProps {
 // All pick fields across every day — used to determine which teams have already been picked
 const ALL_PICK_FIELDS: (keyof Entry)[] = [
   'pick1','pick2','pick3','pick4','pick5','pick6','pick7',
-  'pick8','pick9','pick10','pick11',
+  'pick8','pick9','pick10','pick11','pick12','pick13',
 ];
 
 /** Returns the spread label for a team: (-X.X) if favorite, (+X.X) if underdog, '' if no data. */
@@ -132,8 +132,9 @@ export default function TomorrowPicks({
 }: TomorrowPicksProps) {
   const teamStatus = buildTeamStatusMap(matchups, scenario);
 
+  // Only count entries that have definitively survived (status 'alive')
   const survivingEntries = entries.filter(
-    (e) => getEntryStatus(e, teamStatus) !== 'eliminated'
+    (e) => getEntryStatus(e, teamStatus) === 'alive'
   );
   const survivingCount = survivingEntries.length;
 

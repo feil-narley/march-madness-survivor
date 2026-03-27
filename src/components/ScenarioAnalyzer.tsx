@@ -28,7 +28,7 @@ export default function ScenarioAnalyzer({
     picks: getTodayPicks(e),
   }));
 
-  const bbSurvival = survival.filter((s) => s.entry.buyback);
+  const bbSurvival = survival.filter((s) => s.entry.pick13 && s.entry.pick13 !== '-');
 
   // Match if any word in the name starts with the search term (not mid-word)
   const filtered = search
@@ -137,7 +137,7 @@ export default function ScenarioAnalyzer({
             {bbTotal > 0 && (
               <>
                 <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: 'uppercase', letterSpacing: '0.07em', marginTop: 14, marginBottom: 2 }}>
-                  Buybacks Only ({bbTotal})
+                  Double Picks Only ({bbTotal})
                 </div>
                 {[
                   { label: 'Would Survive', value: bbAlive,    color: C.alive,     p: pct(bbAlive, bbTotal) },

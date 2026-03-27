@@ -32,9 +32,10 @@ export default function StatsBar({ entries, matchups, scenario }: StatsBarProps)
   const locked  = matchups.filter((m) => m.winner !== null).length;
   const pending = matchups.filter((m) => m.winner === null).length;
 
-  const buybackEntries = entries.filter((e) => e.buyback);
-  const bb = computeCounts(buybackEntries, teamStatus);
-  const bbTotal = buybackEntries.length;
+  // "Double picks" = entries that submitted two picks today (pick13 is valid)
+  const doublePickEntries = entries.filter((e) => e.pick13 && e.pick13 !== '-');
+  const bb = computeCounts(doublePickEntries, teamStatus);
+  const bbTotal = doublePickEntries.length;
 
   const mainStats = [
     { label: 'Total Entries', value: total,     pctStr: null,                color: C.text },
@@ -47,7 +48,7 @@ export default function StatsBar({ entries, matchups, scenario }: StatsBarProps)
   ];
 
   const bbStats = [
-    { label: 'BB Total',     value: bbTotal,       pctStr: null,                  color: C.text },
+    { label: 'Double Picks', value: bbTotal,        pctStr: null,                  color: C.text },
     { label: 'Survived',     value: bb.alive,      pctStr: pct(bb.alive, bbTotal),   color: C.alive },
     { label: 'Partial',      value: bb.partial,    pctStr: pct(bb.partial, bbTotal), color: C.partial },
     { label: 'Uncertain',    value: bb.uncertain,  pctStr: pct(bb.uncertain, bbTotal), color: C.uncertain },
@@ -63,11 +64,11 @@ export default function StatsBar({ entries, matchups, scenario }: StatsBarProps)
         ))}
       </div>
 
-      {/* Buyback row */}
+      {/* Double Picks row */}
       {bbTotal > 0 && (
         <div style={{ marginTop: 8 }}>
           <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 6 }}>
-            Buybacks Only
+            Double Picks Only
           </div>
           <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
             {bbStats.map((s) => (

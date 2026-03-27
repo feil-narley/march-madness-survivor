@@ -19,10 +19,11 @@ interface UseSheetDataResult {
 }
 
 // Update these constants whenever the active day changes
-const PICKS_SHEET        = 'picks - day 4';
-const PICKS_PREV_SHEET   = 'picks - day 3';
-const MATCHUPS_SHEET     = 'matchups - day 4';
-const TOMORROW_MATCHUPS  = 'matchups - day 5';
+const PICKS_SHEET        = 'picks - day 5';
+const PICKS_PREV_SHEET   = 'picks - day 4';
+const MATCHUPS_SHEET     = 'matchups - day 5';
+const TOMORROW_MATCHUPS  = 'matchups - day 6';
+const DAY_AFTER_MATCHUPS = 'matchups - day 7';
 
 export function useSheetData(): UseSheetDataResult {
   const [data, setData]       = useState<SheetData | null>(null);
@@ -40,7 +41,7 @@ export function useSheetData(): UseSheetDataResult {
       fetchEntries(PICKS_PREV_SHEET),
       fetchMatchups(MATCHUPS_SHEET),
       fetchMatchups(TOMORROW_MATCHUPS).catch(() => [] as Matchup[]),
-      fetchMatchups('matchups - day 6').catch(() => [] as Matchup[]),
+      fetchMatchups(DAY_AFTER_MATCHUPS).catch(() => [] as Matchup[]),
     ])
       .then(([todayEntries, prevEntries, matchups, tomorrowMatchups, dayAfterMatchups]) => {
         if (cancelled) return;
@@ -51,18 +52,18 @@ export function useSheetData(): UseSheetDataResult {
           if (!prevMap.has(e.name)) prevMap.set(e.name, e);
         }
 
-        // Only keep entries that have today's pick data (pick10 or pick11 must be present)
-        // "NOT LISTED" counts as present — it is a valid submitted pick (uncertain team)
-        // Entries with no day 4 picks are excluded entirely from all views and counts
+        // Only keep entries that submitted a pick12 (the required today pick).
+        // pick13 being absent means they are a single-picker — still valid.
+        // "NOT LISTED" counts as present — it is a valid submitted pick (uncertain team).
         const entries: Entry[] = todayEntries
-          .filter((e) => (e.pick10 && e.pick10 !== '-') || (e.pick11 && e.pick11 !== '-'))
+          .filter((e) => e.pick12 && e.pick12 !== '-')
           .map((e) => {
             const prev = prevMap.get(e.name);
-            // Flag if any carryover picks differ from the prior day's sheet
             const inconsistentPicks = prev
-              ? e.pick1 !== prev.pick1 || e.pick2 !== prev.pick2 ||
-                e.pick3 !== prev.pick3 || e.pick4 !== prev.pick4 ||
-                e.pick8 !== prev.pick8 || e.pick9 !== prev.pick9
+              ? e.pick1  !== prev.pick1  || e.pick2  !== prev.pick2  ||
+                e.pick3  !== prev.pick3  || e.pick4  !== prev.pick4  ||
+                e.pick8  !== prev.pick8  || e.pick9  !== prev.pick9  ||
+                e.pick10 !== prev.pick10 || e.pick11 !== prev.pick11
               : false;
             return { ...e, inconsistentPicks };
           });

@@ -7,7 +7,7 @@ const STATUS_LABEL: Record<string, string> = {
   alive: 'Alive', won: 'Won', dead: 'Eliminated', unknown: '—',
 };
 
-type Filter = 'all' | 'regular' | 'buyback';
+type Filter = 'all' | 'single' | 'double';
 
 interface TeamFrequencyProps {
   entries: Entry[];
@@ -20,9 +20,9 @@ export default function TeamFrequency({ entries, matchups, scenario }: TeamFrequ
 
   const teamStatus = buildTeamStatusMap(matchups, scenario);
 
-  const regularEntries = entries.filter((e) => !e.buyback);
-  const buybackEntries = entries.filter((e) => e.buyback);
-  const activeEntries  = filter === 'regular' ? regularEntries : filter === 'buyback' ? buybackEntries : entries;
+  const doublePickEntries = entries.filter((e) => e.pick13 && e.pick13 !== '-');
+  const singlePickEntries = entries.filter((e) => !e.pick13 || e.pick13 === '-');
+  const activeEntries = filter === 'single' ? singlePickEntries : filter === 'double' ? doublePickEntries : entries;
 
   const stats = computeTeamStats(activeEntries, teamStatus);
 
@@ -33,9 +33,9 @@ export default function TeamFrequency({ entries, matchups, scenario }: TeamFrequ
   const maxCount = stats[0].pickCount;
 
   const filterButtons: { id: Filter; label: string; count: number }[] = [
-    { id: 'all',     label: 'All Entries',  count: entries.length },
-    { id: 'regular', label: 'Regular Only', count: regularEntries.length },
-    { id: 'buyback', label: 'Buyback Only', count: buybackEntries.length },
+    { id: 'all',    label: 'All Entries',       count: entries.length },
+    { id: 'single', label: 'Single Pick Only',  count: singlePickEntries.length },
+    { id: 'double', label: 'Double Pick Only',  count: doublePickEntries.length },
   ];
 
   return (
@@ -68,7 +68,7 @@ export default function TeamFrequency({ entries, matchups, scenario }: TeamFrequ
             <div style={{ fontSize: 14, fontWeight: 700, color: C.text }}>Pick Frequency</div>
             <div style={{ fontSize: 12, color: C.textDim, marginTop: 2 }}>
               Today's picks ·{' '}
-              {filter === 'all' ? 'all entries' : filter === 'buyback' ? 'buyback entries only' : 'regular entries only'}
+              {filter === 'all' ? 'all entries' : filter === 'double' ? 'double pick entries only' : 'single pick entries only'}
             </div>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

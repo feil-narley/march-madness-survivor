@@ -25,8 +25,8 @@ export default function Dashboard({ entries, matchups, scenario }: DashboardProp
   const teamStats  = computeTeamStats(entries, teamStatus);
 
   const { alive, partial, uncertain, eliminated } = countStatuses(entries, teamStatus);
-  const buybackEntries = entries.filter((e) => e.buyback);
-  const bb = countStatuses(buybackEntries, teamStatus);
+  const doublePickEntries = entries.filter((e) => e.pick13 && e.pick13 !== '-');
+  const bb = countStatuses(doublePickEntries, teamStatus);
 
   const locked  = matchups.filter((m) => m.winner !== null);
   const pending = matchups.filter((m) => m.winner === null);
@@ -46,10 +46,10 @@ export default function Dashboard({ entries, matchups, scenario }: DashboardProp
           ].map((s) => (
             <StatRow key={s.label} label={s.label} value={s.value} color={s.color} />
           ))}
-          {buybackEntries.length > 0 && (
+          {doublePickEntries.length > 0 && (
             <>
               <div style={{ fontSize: 10, fontWeight: 700, color: C.textDim, textTransform: 'uppercase', letterSpacing: '0.08em', marginTop: 14, marginBottom: 4 }}>
-                Buybacks Only ({buybackEntries.length})
+                Double Picks Only ({doublePickEntries.length})
               </div>
               {[
                 { label: 'Survived',   value: bb.alive,     color: C.alive },

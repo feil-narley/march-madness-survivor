@@ -17,6 +17,8 @@ export interface Entry {
   pick9: string;
   pick10: string;
   pick11: string;
+  pick12: string;
+  pick13: string;
   /** True when carryover picks in the current day's sheet differ from the prior day's sheet */
   inconsistentPicks?: boolean;
 }
